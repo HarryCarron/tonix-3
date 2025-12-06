@@ -1,0 +1,13 @@
+.nodes-container {
+  overflow: auto;
+}
+
+.tools-container {
+  bottom: 0;
+}
+
+.navigator-container {
+  right: 0;
+  bottom: 0;
+  
+}
