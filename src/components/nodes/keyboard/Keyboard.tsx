@@ -47,7 +47,11 @@ export default function Keyboard() {
 
           <div id="keyboard-body" className="p-1 h-25">
             <div className="h-full w-full" ref={keyboardContainer}>
-              <svg width={containerDims.width} height={containerDims.height}>
+              <svg
+                className="overflow-visible"
+                width={containerDims.width}
+                height={containerDims.height}
+              >
                 {Array.from({ length: keysNum }).map((key, keyId) => {
                   return (
                     <rect

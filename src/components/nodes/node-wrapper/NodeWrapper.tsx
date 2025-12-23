@@ -46,7 +46,7 @@ export function NodeWrapper({ nodeKey }: NodeWrapperProps) {
           </div>
         </span>
       </div>
-      <div className="node-container shadow-lg">
+      <div className="node-container">
         <Node />
       </div>
     </div>
