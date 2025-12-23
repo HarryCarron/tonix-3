@@ -1,0 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Tiny5&display=swap");
+
+.vintage-slider {
+  text-transform: capitalize;
+  font-family: "Tiny5", sans-serif;
+  font-weight: 400;
+  background-color: #3a3a3a;
+  color: #616161;
+  font-size: 0.9em;
+  padding: 0 3px;
+}
+
+.option {
+  padding: 0px 2px;
+
+  /* border-width: 1px;
+  border-style: solid;
+  border-color: rgb(194, 194, 194); */
+}
+
+.selected {
+  background-color: hsl(0, 0%, 85%);
+  color: #494949;
+}

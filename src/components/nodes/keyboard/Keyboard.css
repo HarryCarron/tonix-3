@@ -1,0 +1,16 @@
+.keyboard {
+  width: 300px;
+}
+
+.keys-background {
+  background-color: rgb(146 146 146);
+  border-radius: 2px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.natural-key {
+  fill: white;
+  stroke: rgb(67, 67, 67);
+  stroke-width: 0.5;
+}
