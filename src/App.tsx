@@ -67,6 +67,10 @@ function App() {
           <NodeWrapper nodeKey="keyboard" />
         </span>
 
+        <span className="m-5 test-2 absolute">
+          <NodeWrapper nodeKey="polysynth" />
+        </span>
+
         {/* <span ref={nodesArea}>
           <NodesArea/>
         </span> */}

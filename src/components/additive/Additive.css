@@ -1,0 +1,33 @@
+.additive-controls {
+  padding: 3px;
+  border-top: 1px solid #6e6e6e;
+  color: #d1d1d1;
+  font-size: 0.9em;
+  font-weight: 800;
+}
+
+.additive-tools > div {
+  margin: 0 5px;
+  width: 10px;
+}
+
+.additive-tools {
+  font-size: 0.8em;
+}
+
+.addative-button {
+  background-color: #3e3e3e;
+  padding: 1px 3px;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.8em;
+  color: #b5b4b4;
+}
+
+.addative-button:hover {
+  color: rgb(132, 132, 132);
+}
+
+.clear {
+  margin-left: 10px;
+}

@@ -38,10 +38,10 @@ export default function Keyboard() {
   }, []);
 
   return (
-    <Card>
-      <CardContent>
+    <Card className="py-3 px-0">
+      <CardContent className="px-3">
         <div className="keyboard flex flex-col">
-          <div id="keyboard-top" className="h-10 mb-4">
+          <div id="keyboard-top" className="h-10 mb-3">
             <KeyboardToolbar />
           </div>
 
