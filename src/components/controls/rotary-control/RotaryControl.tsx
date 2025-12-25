@@ -1,13 +1,12 @@
 import { useRef, useEffect } from "react";
 import { DragAndDrop } from "./../../../utils/drag-and-drop";
 import "./RotaryControl.css";
+import { Input } from "@/components/ui/input";
 
 export default function RotaryControl() {
   const rotaryControl = useRef<SVGSVGElement | null>(null);
 
-  const arcWidth = 1;
-
-  const size = 20;
+  const size = 23;
 
   const value = 0.5;
 
@@ -64,7 +63,7 @@ export default function RotaryControl() {
     <div className="w-[40px]">
       <div className="flex flex-col mb-2">
         <div className="flex text-sm justify-center align-center border border-stone-200 shadow-xs rounded-md">
-          {(value * 100).toFixed(0)}
+          <Input className="p-2 h-6" value={(value * 100).toFixed(0)} />
         </div>
       </div>
 
@@ -77,7 +76,7 @@ export default function RotaryControl() {
         >
           <path
             fill="none"
-            strokeWidth={arcWidth}
+            strokeWidth="2"
             strokeLinecap="round"
             className="stroke-stone-300"
             d={describeArc(size / 2, size / 2, size / 2, 210, 510)}
@@ -86,7 +85,7 @@ export default function RotaryControl() {
           <path
             fill="none"
             className="stroke-stone-800"
-            strokeWidth={arcWidth}
+            strokeWidth="2"
             strokeLinecap="round"
             d={describeArc(
               size / 2,
@@ -111,7 +110,7 @@ export default function RotaryControl() {
               y1={size - 6}
               x2={size / 2}
               y2={size}
-              strokeWidth="1"
+              strokeWidth="2"
               strokeLinecap="round"
               stroke="black"
             ></line>
