@@ -19,7 +19,7 @@ interface MenuProps {
 
 export default function Menu({ navItems }: MenuProps) {
   return (
-    <div className="outer-menu-container h-full flex flex-col p-4">
+    <div className="outer-menu-container flex flex-col p-4">
       <Header />
       {/* <Body navItems={navItems} /> */}
     </div>

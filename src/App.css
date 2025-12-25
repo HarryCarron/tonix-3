@@ -1,13 +1,5 @@
 .nodes-container {
   overflow: auto;
-  background: rgba(223, 226, 227, 0.51);
-  background-image: radial-gradient(
-    rgb(185 185 185 / 37%) 1.45px,
-    transparent 0
-  );
-
-  background-size: 25px 25px;
-  background-position: -33px -33px;
 }
 
 .tools-container {

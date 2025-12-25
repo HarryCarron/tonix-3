@@ -1,0 +1,16 @@
+.workspace {
+  background: rgba(223, 226, 227, 0.51);
+  background-image: radial-gradient(
+    rgb(185 185 185 / 37%) 1.45px,
+    transparent 0
+  );
+
+  transition: scale 0.5s;
+
+  background-size: 25px 25px;
+  background-position: -33px -33px;
+}
+
+.workspace-inner {
+  transform-origin: 0 0;
+}

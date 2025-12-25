@@ -14,6 +14,7 @@ import "./Polysynth.css";
 import { Input } from "@/components/ui/input";
 import type { ComponentType } from "react";
 import { Switch } from "@/components/ui/switch";
+import { PiWaveSquare, PiWaveSawtooth, PiWaveSine } from "react-icons/pi";
 
 export function Polysynth() {
   return (
@@ -88,9 +89,15 @@ function WaveSelector() {
       <SelectContent>
         <SelectGroup>
           <SelectLabel>Waveform</SelectLabel>
-          <SelectItem value="apple">Sin</SelectItem>
-          <SelectItem value="banana">Saw</SelectItem>
-          <SelectItem value="b">Srq</SelectItem>
+          <SelectItem value="apple">
+            <PiWaveSine /> Sin
+          </SelectItem>
+          <SelectItem value="banana">
+            <PiWaveSawtooth /> Saw
+          </SelectItem>
+          <SelectItem value="b">
+            <PiWaveSquare /> Srq
+          </SelectItem>
           <SelectSeparator></SelectSeparator>
           <SelectItem value="blueberry">Add</SelectItem>
         </SelectGroup>

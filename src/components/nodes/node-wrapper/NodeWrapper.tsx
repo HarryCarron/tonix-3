@@ -1,32 +1,21 @@
 import { HiOutlineX } from "react-icons/hi";
 import { HiAdjustments } from "react-icons/hi";
-
 import "./NodeWrapper.css";
-import { NodeMap } from "./../../../utils/node-map";
 import { Button } from "@/components/ui/button";
 import { HiOutlineVolumeOff } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
+import type { ReactNode } from "react";
 
 interface NodeWrapperProps {
-  nodeKey: string;
+  children: ReactNode;
 }
 
-export function NodeWrapper({ nodeKey }: NodeWrapperProps) {
-  const Node = NodeMap[nodeKey];
-
+export function NodeWrapper({ children }: NodeWrapperProps) {
   return (
     <div className="node-wrapper inline-flex flex-col">
       <div className="title-container h-12 w-full flex">
         <div className="grow flex items-center">
           <Input value="Keyboard 1" />
-        </div>
-        <div className="on-off-container flex justify-center mx-2">
-          {/* <VintageSlider
-            config={{
-              true: { value: true, label: "On" },
-              false: { value: false, label: "Off" },
-            }}
-          /> */}
         </div>
         <span className="flex gap-[2px]">
           <div className="flex items-center justify-center">
@@ -46,9 +35,7 @@ export function NodeWrapper({ nodeKey }: NodeWrapperProps) {
           </div>
         </span>
       </div>
-      <div className="node-container">
-        <Node />
-      </div>
+      <div className="node-container">{children}</div>
     </div>
   );
 }

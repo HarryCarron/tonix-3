@@ -62,7 +62,7 @@ export default function RotaryControl() {
   return (
     <div className="w-[40px]">
       <div className="flex flex-col mb-2">
-        <div className="flex text-sm justify-center align-center border border-stone-200 shadow-xs rounded-md">
+        <div className="flex text-sm justify-center align-center">
           <Input className="p-2 h-6" value={(value * 100).toFixed(0)} />
         </div>
       </div>
