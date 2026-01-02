@@ -11,7 +11,7 @@ function App() {
 
   return (
     <div className="flex h-full relative">
-      <div className="menu-container absolute z-10 w-sm h-full">
+      <div className="menu-container absolute z-10 w-sm">
         <Menu navItems={menuItems} />
       </div>
       <Workspace editorTool={editorTool!} />
