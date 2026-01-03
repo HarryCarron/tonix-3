@@ -5,57 +5,43 @@ import { EditorTool } from "@/types/editor/EditorTools";
 import React, { useEffect, useRef, useState } from "react";
 import { World } from "../world/World";
 import { Coords } from "@/types/global/Coords";
-import { PanHandler } from "@/utils/pan-handler";
 import { PanStateHandlers } from "./state-handlers/pan";
+import { PanHandler } from "@/utils/pan-handler";
 
 interface WorkspaceProps {
   editorTool: EditorTool;
 }
 
 export function Workspace({ editorTool }: WorkspaceProps) {
-  const { pan, zoomAt, setPan } = useViewport();
-  const [mouseEvent, setMouseEvent] = useState<React.MouseEvent>();
-  const hostElem = useRef<HTMLDivElement | null>(null);
+  const { zoomAt, setPan } = useViewport();
+  const [mouseEvent] = useState<React.MouseEvent>();
 
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const worldRef = useRef<HTMLDivElement | null>(null);
 
-  const panHandler = useRef<PanHandler>(new PanHandler());
-
-  const ephemeralPan = useRef<Coords | undefined>(new Coords());
+  const panHandlerRef = useRef<PanHandler>(new PanHandler());
 
   useEffect(() => {
-    if (!mouseEvent) return;
-
-    const host = hostElem.current!;
+    const host = hostRef.current!;
     const world = worldRef.current!;
-    const basePan = pan ?? new Coords();
+    const panHandler = panHandlerRef.current!;
 
-    panHandler.current.listen(
-      (pos: Coords) => {
-        ephemeralPan.current = pos;
-
-        const x = basePan.x + pos.x;
-        const y = basePan.y + pos.y;
-
-        world.style.transform = `translate(${x}px, ${y}px) scale(1)`;
-      },
-      mouseEvent,
-      host
-    );
-  }, [mouseEvent]);
-
-  useEffect(() => {
-    if (mouseEvent) return;
-
-    const delta = ephemeralPan.current;
-    if (!delta) return;
-
-    setPan((prev) => {
-      return new Coords(prev.x + delta.x, prev.y + delta.y);
+    panHandler.onChange((transform: string) => {
+      world.style.transform = transform;
     });
 
-    ephemeralPan.current = undefined;
-  }, [mouseEvent]);
+    panHandler.onDone((newPan: Coords) => {
+      setPan(newPan);
+    });
+
+    panHandler.setHost(host);
+
+    panHandler.listen();
+
+    return () => {
+      panHandler.done();
+    };
+  }, []);
 
   const classes = PanStateHandlers.setInteractionClasses(
     editorTool === EditorTool.pan,
@@ -65,18 +51,12 @@ export function Workspace({ editorTool }: WorkspaceProps) {
   return (
     <div
       id="camera"
-      ref={hostElem}
+      ref={hostRef}
       onWheel={(e) => {
         const factor = e.deltaY < 0 ? 1.1 : 0.9;
         zoomAt(e.clientX, e.clientY, factor);
       }}
       className={"w-full h-full overflow-hidden relative " + classes}
-      onMouseDown={(e) => {
-        setMouseEvent(e);
-      }}
-      onMouseUp={() => {
-        setMouseEvent(undefined);
-      }}
     >
       <span ref={worldRef} className="absolute">
         <World />

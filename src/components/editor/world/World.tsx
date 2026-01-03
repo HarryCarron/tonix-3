@@ -16,7 +16,6 @@ export function World() {
       style={{
         height: "3000px",
         width: "3000px",
-        // transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
       }}
     >
       <Background />
