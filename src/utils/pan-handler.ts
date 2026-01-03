@@ -5,7 +5,7 @@ export type PanPayload = [Coords, Coords];
 
 type PanChangeHandler = (t: string) => void;
 
-export class PanHandler extends BaseHandler<PanChangeHandler> {
+export class PanHandler extends BaseHandler<Coords> {
   private _origin = new Coords();
 
   private _previous = new Coords();
@@ -84,7 +84,7 @@ export class PanHandler extends BaseHandler<PanChangeHandler> {
     this._host!.addEventListener("mousedown", this._mouseDown);
   }
 
-  onChange(handler: PanChangeHandler): void {
+  onValueChange(handler: (v: string) => void): void {
     this._changeFn = handler;
   }
 
@@ -96,8 +96,14 @@ export class PanHandler extends BaseHandler<PanChangeHandler> {
     this._host = host;
   }
 
-  done() {
+  destroy() {
     this._mouseUp!();
     this._host.removeEventListener("mousedown", this._mouseDown);
+
+    this._changeFn = undefined;
+  }
+
+  forceChange(): void {
+    this._emit(new Coords());
   }
 }

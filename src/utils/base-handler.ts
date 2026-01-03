@@ -12,7 +12,15 @@ export abstract class BaseHandler<T = unknown> {
     return new Coords(posB.x - posA.x, posB.y - posA.y);
   }
 
-  abstract onChange(c: T): void;
+  abstract onValueChange(c: (v: string) => void): void;
 
-  abstract done(): void;
+  abstract onDone(c: (v: T) => void): void;
+
+  abstract destroy(): void;
+
+  abstract listen(): void;
+
+  abstract setHost(h: HTMLElement): void;
+
+  abstract forceChange(): void;
 }
