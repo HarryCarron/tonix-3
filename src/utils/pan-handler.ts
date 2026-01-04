@@ -8,7 +8,7 @@ type PanChangeHandler = (t: Coords) => void;
 export class PanHandler extends BaseHandler {
   private _origin = new Coords();
 
-  private _previous = new Coords();
+  private _committed = new Coords();
 
   private _changeFn: PanChangeHandler | undefined;
 
@@ -37,8 +37,8 @@ export class PanHandler extends BaseHandler {
 
   private __mouseUp(e?: MouseEvent): void {
     if (e) {
-      this._persist(e);
-      this._doneFn?.(this._previous);
+      this._commit(e);
+      this._doneFn?.(this._committed);
     }
     this.host.removeEventListener("mousemove", this._mouseMove);
     this.host.removeEventListener("mouseup", this._mouseUp);
@@ -53,11 +53,11 @@ export class PanHandler extends BaseHandler {
 
   private _prepare(pan: Coords): Coords {
     const { x: panX, y: panY } = pan;
-    const { x: prevX, y: prevY } = this._previous;
+    const { x: committedX, y: committedY } = this._committed;
 
     return {
-      x: prevX + panX,
-      y: prevY + panY,
+      x: committedX + panX,
+      y: committedY + panY,
     };
   }
 
@@ -72,10 +72,10 @@ export class PanHandler extends BaseHandler {
     };
   }
 
-  private _persist(e: MouseEvent): void {
+  private _commit(e: MouseEvent): void {
     const pan = this.calculateRelPos(this._origin, this.extract(e));
-    this._previous.x += pan.x;
-    this._previous.y += pan.y;
+    this._committed.x += pan.x;
+    this._committed.y += pan.y;
   }
 
   listen(): void {

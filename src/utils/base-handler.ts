@@ -3,7 +3,7 @@ import { Coords } from "@/types/global/Coords";
 export abstract class BaseHandler {
   host!: HTMLElement;
 
-  public extract(event: React.MouseEvent | MouseEvent): Coords {
+  public extract<T extends MouseEvent>(event: T): Coords {
     return {
       x: event.clientX,
       y: event.clientY,
