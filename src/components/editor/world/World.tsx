@@ -1,18 +1,10 @@
 import { ENV } from "@/env";
 import "./World.css";
 
-interface WorldProps {
-  pan: {
-    x: number;
-    y: number;
-  };
-  zoom: number;
-}
-
 export function World() {
   return (
     <div
-      className="world"
+      className="world relative"
       style={{
         height: "3000px",
         width: "3000px",

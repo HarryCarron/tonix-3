@@ -1,13 +1,19 @@
 import type { BaseHandler } from "./base-handler";
 import { PanHandler } from "./pan-handler";
+import { ZoomHandler } from "./zoom-handler";
 
 type Interactions = "pan" | "zoom";
 
-type TransformChangeHandler = (t: string) => void;
+type TransformChangeHandler = (handlerMap: HandlerMap) => void;
+
+export interface InteractionPayload {
+  key: Interactions;
+  value: unknown;
+}
 
 interface HandlerDef {
   handler: BaseHandler;
-  value: string | undefined;
+  value: unknown | undefined;
 }
 
 interface ListenerDef<T = unknown> {
@@ -15,29 +21,31 @@ interface ListenerDef<T = unknown> {
   selectDone: (v: T) => void;
 }
 
+export type HandlerMap = Record<string, HandlerDef>;
+
 export class InteractionHandler {
   private _host!: HTMLElement;
 
-  private readonly _handlerMap: Record<string, HandlerDef> = {
+  private readonly _handlerMap: HandlerMap = {
     pan: {
       handler: new PanHandler(),
       value: undefined,
     },
+    zoom: {
+      handler: new ZoomHandler(),
+      value: undefined,
+    },
   };
-  private _transformChangeHandler!: TransformChangeHandler;
+  private _changeHandler!: TransformChangeHandler;
 
   private _getHandlerDef(interaction: Interactions): HandlerDef {
-    return Object.entries(this._handlerMap).find(([key]) => {
-      return key === interaction;
-    })![1];
+    return Object.entries(this._handlerMap).find(
+      ([key]) => key === interaction
+    )![1];
   }
 
   private _emit(): void {
-    const transform = Object.entries(this._handlerMap)
-      .map(([, def]) => def.value)
-      .join(" ");
-
-    this._transformChangeHandler(transform);
+    this._changeHandler(this._handlerMap);
   }
 
   private _initListener(ListenerDef: ListenerDef): void {
@@ -52,7 +60,7 @@ export class InteractionHandler {
       });
     }
 
-    def.handler.onValueChange((value: string) => {
+    def.handler.onValueChange((value: unknown) => {
       def.value = value;
       this._emit();
     });
@@ -63,8 +71,8 @@ export class InteractionHandler {
   init(): this {
     Object.entries(this._handlerMap).forEach(([, def]) => {
       def.handler.setHost(this._host);
-      def.handler.onValueChange((value: string) => (def.value = value));
-      def.handler.forceChange();
+      def.handler.onValueChange((value: unknown) => (def.value = value));
+      def.handler.bootstrap();
       def.handler.destroy();
     });
 
@@ -79,8 +87,8 @@ export class InteractionHandler {
     return this;
   }
 
-  transformChange(handler: TransformChangeHandler): this {
-    this._transformChangeHandler = handler;
+  onChange(handler: TransformChangeHandler): this {
+    this._changeHandler = handler;
 
     return this;
   }
@@ -91,7 +99,7 @@ export class InteractionHandler {
     });
   }
 
-  done(): void {
+  destroy(): void {
     Object.entries(this._handlerMap).forEach(([, def]) => {
       def.handler.destroy();
     });

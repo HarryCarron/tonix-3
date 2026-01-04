@@ -3,9 +3,9 @@ import { BaseHandler } from "./base-handler";
 
 export type PanPayload = [Coords, Coords];
 
-type PanChangeHandler = (t: string) => void;
+type PanChangeHandler = (t: Coords) => void;
 
-export class PanHandler extends BaseHandler<Coords> {
+export class PanHandler extends BaseHandler {
   private _origin = new Coords();
 
   private _previous = new Coords();
@@ -19,8 +19,6 @@ export class PanHandler extends BaseHandler<Coords> {
   private _mouseDown!: (e: MouseEvent) => void;
 
   private _doneFn?: (p: Coords) => void;
-
-  private _host!: HTMLElement;
 
   constructor() {
     super();
@@ -42,15 +40,15 @@ export class PanHandler extends BaseHandler<Coords> {
       this._persist(e);
       this._doneFn?.(this._previous);
     }
-    this._host.removeEventListener("mousemove", this._mouseMove);
-    this._host.removeEventListener("mouseup", this._mouseUp);
+    this.host.removeEventListener("mousemove", this._mouseMove);
+    this.host.removeEventListener("mouseup", this._mouseUp);
   }
 
   private __mouseDown(e: MouseEvent): void {
     this._origin = this._extract(e);
 
-    this._host.addEventListener("mousemove", this._mouseMove);
-    this._host.addEventListener("mouseup", this._mouseUp);
+    this.host.addEventListener("mousemove", this._mouseMove);
+    this.host.addEventListener("mouseup", this._mouseUp);
   }
 
   private _prepare(pan: Coords): Coords {
@@ -63,8 +61,8 @@ export class PanHandler extends BaseHandler<Coords> {
     };
   }
 
-  private _emit({ x, y }: Coords): void {
-    this._changeFn!(`translate(${x}px, ${y}px)`);
+  private _emit(coords: Coords): void {
+    this._changeFn!(coords);
   }
 
   private _extract(event: React.MouseEvent | MouseEvent): Coords {
@@ -81,10 +79,10 @@ export class PanHandler extends BaseHandler<Coords> {
   }
 
   listen(): void {
-    this._host!.addEventListener("mousedown", this._mouseDown);
+    this.host!.addEventListener("mousedown", this._mouseDown);
   }
 
-  onValueChange(handler: (v: string) => void): void {
+  onValueChange(handler: (v: Coords) => void): void {
     this._changeFn = handler;
   }
 
@@ -92,18 +90,14 @@ export class PanHandler extends BaseHandler<Coords> {
     this._doneFn = handler;
   }
 
-  setHost(host: HTMLElement) {
-    this._host = host;
-  }
-
   destroy() {
     this._mouseUp!();
-    this._host.removeEventListener("mousedown", this._mouseDown);
+    this.host.removeEventListener("mousedown", this._mouseDown);
 
     this._changeFn = undefined;
   }
 
-  forceChange(): void {
+  bootstrap(): void {
     this._emit(new Coords());
   }
 }

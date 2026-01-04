@@ -1,11 +1,12 @@
-import { useViewport } from "@/hooks/useViewport";
 import "./Workspace.css";
-
 import { EditorTool } from "@/types/editor/EditorTools";
 import React, { useEffect, useRef, useState } from "react";
 import { World } from "../world/World";
 import { PanStateHandlers } from "./state-handlers/pan";
-import { InteractionHandler } from "@/utils/interaction-handler";
+import {
+  InteractionHandler,
+  type HandlerMap,
+} from "@/utils/interaction-handler";
 import type { Coords } from "@/types/global/Coords";
 
 interface WorkspaceProps {
@@ -13,8 +14,6 @@ interface WorkspaceProps {
 }
 
 export function Workspace({ editorTool }: WorkspaceProps) {
-  // const { zoomAt, setPan } = useViewport();
-
   const [, setPan] = useState<Coords | undefined>();
   const [, setZoom] = useState<number | undefined>();
   const [mouseEvent] = useState<React.MouseEvent>();
@@ -24,14 +23,23 @@ export function Workspace({ editorTool }: WorkspaceProps) {
 
   const interactionRef = useRef(new InteractionHandler());
 
+  function _prepareTransform(handlerMap: HandlerMap): string {
+    const { pan: pHandler, zoom: zHandler } = handlerMap;
+
+    const pan = pHandler.value as Coords;
+    const zoom = zHandler.value as number;
+
+    return `translate(${pan.x * zoom}px, ${pan.y * zoom}px) scale(${zoom})`;
+  }
+
   useEffect(() => {
     const interaction = interactionRef.current;
     const host = hostRef.current!;
     const world = worldRef.current!;
 
     interaction
-      .transformChange((transform: string) => {
-        world.style.transform = transform;
+      .onChange((handlers: HandlerMap) => {
+        world.style.transform = _prepareTransform(handlers);
       })
       .setHost(host)
       .init()
@@ -51,7 +59,7 @@ export function Workspace({ editorTool }: WorkspaceProps) {
       );
 
     return () => {
-      interaction.done();
+      interaction.destroy();
     };
   }, []);
 
@@ -64,10 +72,6 @@ export function Workspace({ editorTool }: WorkspaceProps) {
     <div
       id="camera"
       ref={hostRef}
-      // onWheel={(e) => {
-      //   const factor = e.deltaY < 0 ? 1.1 : 0.9;
-      //   zoomAt(e.clientX, e.clientY, factor);
-      // }}
       className={"w-full h-full overflow-hidden relative " + classes}
     >
       <span ref={worldRef} className="absolute">
