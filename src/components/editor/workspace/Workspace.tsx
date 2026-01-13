@@ -2,6 +2,7 @@ import "./Workspace.css";
 import { EditorTool } from "@/types/editor/EditorTools";
 import { World } from "../world/World";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Tools from "../tools/Tools";
 
 interface WorkspaceProps {
   editorTool: EditorTool;
@@ -11,7 +12,7 @@ export function Workspace({ editorTool }: WorkspaceProps) {
   const classes = "";
 
   return (
-    <div className={"w-full h-full " + classes}>
+    <div className={"w-full h-full relative" + classes}>
       <TransformWrapper
         minScale={0.3}
         maxScale={1}
