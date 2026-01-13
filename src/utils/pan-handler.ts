@@ -5,7 +5,7 @@ export type PanPayload = [Coords, Coords];
 
 type PanChangeHandler = (t: Coords) => void;
 
-export class PanHandler extends BaseHandler {
+export class PanHandler extends BaseHandler<Coords> {
   private _origin = new Coords();
 
   private _committed = new Coords();
@@ -18,7 +18,7 @@ export class PanHandler extends BaseHandler {
 
   private _mouseDown!: (e: MouseEvent) => void;
 
-  private _doneFn?: (p: Coords) => void;
+  private _onCommit?: (p: Coords) => void;
 
   constructor() {
     super();
@@ -29,7 +29,7 @@ export class PanHandler extends BaseHandler {
   }
 
   private __mouseMove(e: MouseEvent): void {
-    const delta = this.calculateRelPos(this._origin, this._extract(e));
+    const delta = this._calculateRelPos(this._origin, this._extract(e));
     const pan = this._prepare(delta);
 
     this._emit(pan);
@@ -38,7 +38,7 @@ export class PanHandler extends BaseHandler {
   private __mouseUp(e?: MouseEvent): void {
     if (e) {
       this._commit(e);
-      this._doneFn?.(this._committed);
+      this._onCommit?.(this._committed);
     }
     this.host.removeEventListener("mousemove", this._mouseMove);
     this.host.removeEventListener("mouseup", this._mouseUp);
@@ -61,6 +61,10 @@ export class PanHandler extends BaseHandler {
     };
   }
 
+  private _calculateRelPos(posA: Coords, posB: Coords): Coords {
+    return new Coords(posB.x - posA.x, posB.y - posA.y);
+  }
+
   private _emit(coords: Coords): void {
     this._changeFn!(coords);
   }
@@ -73,21 +77,27 @@ export class PanHandler extends BaseHandler {
   }
 
   private _commit(e: MouseEvent): void {
-    const pan = this.calculateRelPos(this._origin, this.extract(e));
+    const pan = this._calculateRelPos(this._origin, this.extract(e));
     this._committed.x += pan.x;
     this._committed.y += pan.y;
   }
 
-  listen(): void {
-    this.host!.addEventListener("mousedown", this._mouseDown);
+  setDerived(derivedCoords: Coords): void {
+    this._committed = derivedCoords;
   }
 
-  onValueChange(handler: (v: Coords) => void): void {
+  init(): this {
+    this.host!.addEventListener("mousedown", this._mouseDown);
+
+    return this;
+  }
+
+  onChange(handler: (v: Coords) => void): void {
     this._changeFn = handler;
   }
 
-  onDone(handler: (p: Coords) => void): void {
-    this._doneFn = handler;
+  onCommit(handler: (p: Coords) => void): void {
+    this._onCommit = handler;
   }
 
   destroy() {

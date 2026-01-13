@@ -1,82 +1,29 @@
 import "./Workspace.css";
 import { EditorTool } from "@/types/editor/EditorTools";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { World } from "../world/World";
-import { PanStateHandlers } from "./state-handlers/pan";
-import {
-  InteractionHandler,
-  type HandlerMap,
-} from "@/utils/interaction-handler";
-import type { Coords } from "@/types/global/Coords";
+
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { ENV } from "@/env";
 
 interface WorkspaceProps {
   editorTool: EditorTool;
 }
 
 export function Workspace({ editorTool }: WorkspaceProps) {
-  const [, setPan] = useState<Coords | undefined>();
-  const [, setZoom] = useState<number | undefined>();
-  const [mouseEvent] = useState<React.MouseEvent>();
-
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const worldRef = useRef<HTMLDivElement | null>(null);
-
-  const interactionRef = useRef(new InteractionHandler());
-
-  function _prepareTransform(handlerMap: HandlerMap): string {
-    const { pan: pHandler, zoom: zHandler } = handlerMap;
-
-    const pan = pHandler.value as Coords;
-    const zoom = zHandler.value as number;
-
-    return `translate(${pan.x * zoom}px, ${pan.y * zoom}px) scale(${zoom})`;
-  }
-
-  useEffect(() => {
-    const interaction = interactionRef.current;
-    const host = hostRef.current!;
-    const world = worldRef.current!;
-
-    interaction
-      .onChange((handlers: HandlerMap) => {
-        world.style.transform = _prepareTransform(handlers);
-      })
-      .setHost(host)
-      .init()
-      .listen(
-        {
-          key: "pan",
-          selectDone: (v) => {
-            setPan(v as Coords);
-          },
-        },
-        {
-          key: "zoom",
-          selectDone: (v) => {
-            setZoom(v as number);
-          },
-        }
-      );
-
-    return () => {
-      interaction.destroy();
-    };
-  }, []);
-
-  const classes = PanStateHandlers.setInteractionClasses(
-    editorTool === EditorTool.pan,
-    !!mouseEvent
-  );
+  const classes = "";
 
   return (
-    <div
-      id="camera"
-      ref={hostRef}
-      className={"w-full h-full overflow-hidden relative " + classes}
-    >
-      <span ref={worldRef} className="absolute">
-        <World />
-      </span>
+    <div className={"w-full h-full " + classes}>
+      <TransformWrapper
+        minScale={0.3}
+        maxScale={1}
+        wheel={{ smoothStep: 0.001, step: 0.2 }}
+      >
+        <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+          <World />
+        </TransformComponent>
+      </TransformWrapper>
     </div>
   );
 }

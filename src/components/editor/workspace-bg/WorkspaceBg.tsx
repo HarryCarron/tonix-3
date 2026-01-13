@@ -1,6 +1,12 @@
+import { ENV } from "./../../../env";
+
 export function WorkspaceBg() {
   return (
-    <svg width="3000px" height="3000px" className="inset-0 pointer-events-none">
+    <svg
+      width={ENV.worldDims + "px"}
+      height={ENV.worldDims + "px"}
+      className="inset-0 pointer-events-none"
+    >
       <pattern
         id="pattern-circles"
         x="0"

@@ -1,10 +1,9 @@
+import type { Coords } from "@/types/global/Coords";
 import type { BaseHandler } from "./base-handler";
 import { PanHandler } from "./pan-handler";
-import { ZoomHandler } from "./zoom-handler";
+import { ZoomHandler, type ZoomChange } from "./zoom-handler";
 
 type Interactions = "pan" | "zoom";
-
-type TransformChangeHandler = (handlerMap: HandlerMap) => void;
 
 export interface InteractionPayload {
   key: Interactions;
@@ -12,13 +11,22 @@ export interface InteractionPayload {
 }
 
 interface HandlerDef {
-  handler: BaseHandler;
+  handler: BaseHandler<unknown>;
   value: unknown | undefined;
 }
 
+export type DerivedStateUpdate = Record<Interactions, unknown>;
+
+/**
+ * Used to update state of given handler without triggering an onChange event
+ */
+export type StateChangeHandler<T = unknown> = (v: T) => DerivedStateUpdate;
+
+type AllStates = [Coords?, ZoomChange?];
+
 interface ListenerDef<T = unknown> {
-  key: Interactions;
-  selectDone: (v: T) => void;
+  onChange: (v: T) => StateChangeHandler<T> | void;
+  onCommit?: (v: T) => StateChangeHandler<T> | void;
 }
 
 export type HandlerMap = Record<string, HandlerDef>;
@@ -36,7 +44,6 @@ export class InteractionHandler {
       value: undefined,
     },
   };
-  private _changeHandler!: TransformChangeHandler;
 
   private _getHandlerDef(interaction: Interactions): HandlerDef {
     return Object.entries(this._handlerMap).find(
@@ -44,39 +51,10 @@ export class InteractionHandler {
     )![1];
   }
 
-  private _emit(): void {
-    this._changeHandler(this._handlerMap);
-  }
-
-  private _initListener(ListenerDef: ListenerDef): void {
-    const { key, selectDone } = ListenerDef;
-
-    const def = this._getHandlerDef(key);
-    def.handler.setHost(this._host);
-
-    if (selectDone) {
-      def.handler.onDone((v) => {
-        selectDone(v);
-      });
-    }
-
-    def.handler.onValueChange((value: unknown) => {
-      def.value = value;
-      this._emit();
-    });
-
-    def.handler.listen();
-  }
-
   init(): this {
     Object.entries(this._handlerMap).forEach(([, def]) => {
       def.handler.setHost(this._host);
-      def.handler.onValueChange((value: unknown) => (def.value = value));
-      def.handler.bootstrap();
-      def.handler.destroy();
     });
-
-    this._emit();
 
     return this;
   }
@@ -87,27 +65,34 @@ export class InteractionHandler {
     return this;
   }
 
-  onChange(handler: TransformChangeHandler): this {
-    this._changeHandler = handler;
+  listen(interaction: Interactions, listener: ListenerDef): this {
+    const { onChange, onCommit } = listener;
+
+    const def = this._getHandlerDef(interaction);
+    def.handler.setHost(this._host);
+
+    if (onCommit) {
+      def.handler.onCommit(onCommit);
+    }
+
+    if (onChange) {
+      def.handler.onChange(onChange);
+    }
+
+    // def.handler.listen();
+
+    def.handler.bootstrap();
 
     return this;
   }
 
-  listen(...listeners: ListenerDef[]): void {
-    listeners.forEach((listener) => {
-      this._initListener(listener);
-    });
+  setDerived<D>(interaction: Interactions, derived: D) {
+    this._getHandlerDef(interaction).handler.setDerived(derived);
   }
 
   destroy(): void {
     Object.entries(this._handlerMap).forEach(([, def]) => {
       def.handler.destroy();
     });
-  }
-
-  select(key: Interactions, onChange: (v: unknown) => void): this {
-    this._getHandlerDef(key).handler.onDone(onChange);
-
-    return this;
   }
 }

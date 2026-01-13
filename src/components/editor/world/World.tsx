@@ -1,15 +1,29 @@
 import { ENV } from "@/env";
 import "./World.css";
+import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
+import { Polysynth } from "@/components/instruments/polysynth/Polysynth";
+import Keyboard from "@/components/nodes/keyboard/Keyboard";
 
 export function World() {
   return (
     <div
-      className="world relative"
+      className="world"
       style={{
-        height: "3000px",
-        width: "3000px",
+        height: ENV.worldDims + "px",
+        width: ENV.worldDims + "px",
       }}
     >
+      <span className="absolute" style={{ left: "300px", top: "300px" }}>
+        <NodeWrapper>
+          <Polysynth />
+        </NodeWrapper>
+      </span>
+
+      <span className="absolute" style={{ left: "800px", top: "400px" }}>
+        <NodeWrapper>
+          <Keyboard />
+        </NodeWrapper>
+      </span>
       <Background />
     </div>
   );

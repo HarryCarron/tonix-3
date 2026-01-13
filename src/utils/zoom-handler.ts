@@ -1,42 +1,51 @@
+import { Coords } from "@/types/global/Coords";
 import { BaseHandler } from "./base-handler";
 
-export class ZoomHandler extends BaseHandler {
+export type ZoomChange = [Coords, number];
+
+export class ZoomHandler extends BaseHandler<ZoomChange> {
   constructor() {
     super();
 
     this._onWheel = this.__onWheel.bind(this);
   }
 
-  private _zoom = 1;
+  private _committed: ZoomChange = [new Coords(), 1];
 
-  private _zoomChange!: (z: number) => void;
+  private _zoomChange!: (zoomChange: ZoomChange) => void;
 
   private _onWheel: (e: WheelEvent) => void;
 
   private __onWheel(e: WheelEvent) {
     const { deltaY } = e;
-    const factor = deltaY < 0 ? 0.005 : -0.005;
+    const point = this.extract(e);
+    // const factor: number = deltaY < 0 ? 0.005 : -0.005;
 
-    this._zoom += factor;
+    this._committed[0] = point;
+    const factor = deltaY < 0 ? 1.05 : 0.95;
+    this._committed[1] *= factor;
 
-    this._zoomChange(this._zoom);
+    this._zoomChange(this._committed);
   }
 
-  onValueChange(changeHandler: (v: number) => void): void {
+  onChange(changeHandler: (v: ZoomChange) => void): void {
     this._zoomChange = changeHandler;
   }
 
   bootstrap(): void {
-    this._zoomChange(1);
+    this._zoomChange(this._committed);
   }
 
   destroy(): void {
     this.host.removeEventListener("wheel", this._onWheel);
   }
 
-  onDone(): void {}
+  onCommit(): void {}
 
-  listen(): void {
+  setDerived(): void {}
+
+  init(): this {
     this.host.addEventListener("wheel", this._onWheel);
+    return this;
   }
 }

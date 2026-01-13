@@ -1,32 +1,30 @@
 import { Coords } from "@/types/global/Coords";
 
-export abstract class BaseHandler {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export abstract class BaseHandler<T = any> {
   host!: HTMLElement;
 
-  public extract<T extends MouseEvent>(event: T): Coords {
-    return {
-      x: event.clientX,
-      y: event.clientY,
-    };
+  extract(event: MouseEvent): Coords {
+    const rect = this.host.getBoundingClientRect();
+
+    return new Coords(event.clientX - rect.left, event.clientY - rect.top);
   }
-
-  public calculateRelPos(posA: Coords, posB: Coords): Coords {
-    return new Coords(posB.x - posA.x, posB.y - posA.y);
-  }
-
-  abstract onValueChange(c: (v: unknown) => void): void;
-
-  abstract onDone(c: (v: unknown) => void): void;
-
-  abstract destroy(): void;
-
-  abstract listen(): void;
-
-  abstract bootstrap(): void;
 
   setHost(host: HTMLElement): this {
     this.host = host;
 
     return this;
   }
+
+  abstract onChange(c: (v: T) => void): void;
+
+  abstract onCommit(c: (v: T) => void): void;
+
+  abstract destroy(): void;
+
+  abstract init(): this;
+
+  abstract bootstrap(): void;
+
+  abstract setDerived(d: T): void;
 }
