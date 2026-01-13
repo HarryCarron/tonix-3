@@ -1,5 +1,4 @@
 import "./App.css";
-import Tools from "./components/editor/tools/Tools";
 import Menu from "./components/editor/menu/Menu";
 import { menuItems } from "./components/editor/menu/menu-items";
 import { Workspace } from "./components/editor/workspace/Workspace";

@@ -1,10 +1,7 @@
 import "./Workspace.css";
 import { EditorTool } from "@/types/editor/EditorTools";
-import { useEffect } from "react";
 import { World } from "../world/World";
-
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { ENV } from "@/env";
 
 interface WorkspaceProps {
   editorTool: EditorTool;
