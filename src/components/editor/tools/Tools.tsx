@@ -13,29 +13,35 @@ export default function Tools({ editorTool, setEditorTool }: ToolsProps) {
   const baseClass = "p-4 rounded-lg active:bg-stone-200 cursor-pointer ";
 
   const classes = {
-    pan: editorTool === EditorTool.pan ? "bg-stone-300" : "hover:bg-stone-100",
-    mag: editorTool === EditorTool.mag ? "bg-stone-300" : "hover:bg-stone-100",
+    pan:
+      editorTool === EditorTool.pan
+        ? "border border-stone-400"
+        : "hover:bg-stone-100",
+    mag:
+      editorTool === EditorTool.mag
+        ? " border border-stone-400"
+        : "hover:bg-stone-100",
   };
 
   return (
-    <div className="bg-stone-50 p-1 rounded-lg shadow-xl">
+    <div className="bg-stone-50 p-2 flex rounded-lg shadow-xl gap-2 border border-stone-600">
       <button
         onClick={() => setEditorTool(EditorTool.add)}
         className={baseClass}
       >
-        <PlusIcon className="size-6" />
+        <PlusIcon className="size-6 text-stone-800" />
       </button>
       <button
         onClick={() => setEditorTool(EditorTool.pan)}
         className={baseClass + classes.pan}
       >
-        <HandRaisedIcon className="size-6" />
+        <HandRaisedIcon className="size-6 text-stone-800" />
       </button>
       <button
         onClick={() => setEditorTool(EditorTool.mag)}
         className={baseClass + classes.mag}
       >
-        <MagnifyingGlassIcon className="size-6" />
+        <MagnifyingGlassIcon className="size-6 text-stone-800" />
       </button>
     </div>
   );

@@ -3,45 +3,67 @@ export interface Position {
   y: number;
 }
 
-type handlerFn = (e?: Event) => void;
+export interface DragAndDropPayload {
+  type: "start" | "dragging" | "done";
+  e: MouseEvent;
+}
 
-export class DragAndDrop<
-  T extends HTMLElement | SVGElement = HTMLElement | SVGElement
-> {
-  private readonly _elem: T;
-  private readonly _onDragFN: handlerFn;
-  private readonly _onDropFN: handlerFn;
-  public done: () => void;
+type DragAndDropHandler = (v: DragAndDropPayload) => void;
 
-  constructor(elem: T, onDragFN: handlerFn, onDropFN: handlerFn) {
-    this._elem = elem;
-    this._onDragFN = onDragFN;
-    this._onDropFN = onDropFN;
+export class DragAndDrop {
+  private readonly _host: HTMLElement;
+  private readonly _handler: DragAndDropHandler;
 
-    this.done = this._init();
+  private _mouseDown: (e: MouseEvent) => void;
+
+  private _mouseMove: (e: MouseEvent) => void;
+
+  private _mouseUp: (e: MouseEvent) => void;
+
+  constructor(host: HTMLElement, handler: DragAndDropHandler) {
+    this._host = host;
+    this._handler = handler;
+
+    this._mouseDown = this.__mouseDown.bind(this);
+    this._mouseMove = this.__mouseMove.bind(this);
+    this._mouseUp = this.__mouseUp.bind(this);
   }
 
-  private _init(): () => void {
-    const dragging = () => {
-      this._onDragFN();
-      this._elem.addEventListener("mousemove", this._onDragFN);
+  private __mouseDown(e: MouseEvent): void {
+    this._handler({
+      type: "start",
+      e,
+    });
+    this._host.addEventListener("mousemove", this._mouseMove);
+    this._host.addEventListener("mouseup", this._mouseUp);
+  }
 
-      this._elem.addEventListener(
-        "mouseup",
-        () => {
-          this._onDropFN();
-          this._elem.removeEventListener("mousemove", this._onDragFN);
-        },
-        {
-          once: true,
-        }
-      );
-    };
+  private __mouseMove(e: MouseEvent): void {
+    this._handler({
+      type: "dragging",
+      e,
+    });
+  }
 
-    this._elem.addEventListener("mousedown", dragging);
+  private __mouseUp(e?: MouseEvent): void {
+    if (e) {
+      this._handler({
+        type: "done",
+        e,
+      });
+    } else {
+      this._host.removeEventListener("mousedown", this._mouseDown);
+    }
 
-    return () => {
-      this._elem.addEventListener("mousedown", dragging);
-    };
+    this._host.removeEventListener("mousemove", this._mouseMove);
+    this._host.removeEventListener("mouseup", this._mouseUp);
+  }
+
+  done(): void {
+    this.__mouseUp();
+  }
+
+  listen(): void {
+    this._host!.addEventListener("mousedown", this._mouseDown);
   }
 }
