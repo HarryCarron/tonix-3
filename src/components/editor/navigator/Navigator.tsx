@@ -1,23 +1,40 @@
-import type { Dimensions } from '../../../reducers/navigator';
-import './Navigator.css'
+import { useEffect, useRef } from "react";
+import "./Navigator.css";
+import { ENV } from "@/env";
 
 interface NavigatorProps {
-    nodeAreaDims: Dimensions;
+  host: HTMLDivElement;
 }
 
-export default function Navigator({nodeAreaDims: {height, width}}: NavigatorProps) {
+export default function Navigator({ host }: NavigatorProps) {
+  const scaleVal = 0.032;
 
+  const cameraRef = useRef<HTMLDivElement | null>(null);
 
-    const scaleVal = 0.15;
+  useEffect(() => {
+    const camera = cameraRef.current!;
+    new ResizeObserver((entry: ResizeObserverEntry[]) => {
+      const { width, height } = entry[0].contentRect;
 
-    return <div style={
-            {
-            height: height * scaleVal,
-            width: width * scaleVal
-            }
-        } className="navigator flex shadow-xl bg-neutral-50 p-1 rounded-lg">
-        <div className='flex-1 w-full h-full bg-neutral-300 rounded-lg'>
+      camera.style.width = `${width * scaleVal}px`;
+      camera.style.height = `${height * scaleVal}px`;
+    }).observe(host);
+  }, []);
 
-        </div>
+  return (
+    <div
+      style={{
+        height: ENV.worldDims * scaleVal,
+        width: ENV.worldDims * scaleVal,
+      }}
+      id="navigator:world"
+      className="navigator flex shadow-xl absolute bg-stone-100 p-1 rounded-lg border-2 border-stone-300"
+    >
+      <div
+        id="navigator:camera"
+        className="camera relative outline-2 outline-stone-400 bg-stone-400/20 outline"
+        ref={cameraRef}
+      ></div>
     </div>
+  );
 }

@@ -1,24 +1,35 @@
-type AllActions = 'setNodeAreaDims';
+type AllActions = "setNodeAreaDims";
 export interface Dimensions {
-    height: number;
-    width: number;
+  height: number;
+  width: number;
+}
+
+export interface Dimensions2 {
+  h: number;
+  w: number;
 }
 
 export interface NavigationState {
-    nodeAreaDims: Dimensions;
+  nodeAreaDims: Dimensions;
 }
 
-export function navigation(state: NavigationState, action: { type: 'setNodeAreaDims', payload: Dimensions }): NavigationState
-export function navigation(state: NavigationState, action: { type: AllActions, payload: Dimensions }): NavigationState {
-    switch (action.type) {
-        case 'setNodeAreaDims': {
-            return {
-                ...state,
-                nodeAreaDims: action.payload,
-            };
-        }
-
-        default:
-            return state;
+export function navigation(
+  state: NavigationState,
+  action: { type: "setNodeAreaDims"; payload: Dimensions }
+): NavigationState;
+export function navigation(
+  state: NavigationState,
+  action: { type: AllActions; payload: Dimensions }
+): NavigationState {
+  switch (action.type) {
+    case "setNodeAreaDims": {
+      return {
+        ...state,
+        nodeAreaDims: action.payload,
+      };
     }
+
+    default:
+      return state;
+  }
 }

@@ -7,8 +7,12 @@ import {
   type ReactZoomPanPinchContentRef,
 } from "react-zoom-pan-pinch";
 import Tools from "../tools/Tools";
-import { useEffect, useRef, useState } from "react";
-import { MagZoom } from "@/utils/workspace/mag-zoom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  BoundingBoxTool,
+  type Rect,
+} from "@/utils/workspace/bounding-box-tool";
+import Navigator from "../navigator/Navigator";
 
 export function Workspace() {
   const [editorTool, setEditorTool] = useState<EditorTool | undefined>();
@@ -17,23 +21,22 @@ export function Workspace() {
 
   const transformRef = useRef<ReactZoomPanPinchContentRef | null>(null);
 
-  const magZoomRef = useRef<MagZoom>(new MagZoom());
+  const boundingBoxRef = useRef<BoundingBoxTool>(new BoundingBoxTool());
 
   let classes = "";
 
+  const handleTransform = useCallback(() => {}, []);
+
   useEffect(() => {
-    const mag = magZoomRef.current!;
+    const bbox = boundingBoxRef.current!;
     const host = hostRef.current!;
-    const transform = transformRef.current!;
 
     if (editorTool === EditorTool.mag) {
-      mag.setHost(host).listen(([a, b]) => {
-        transform.setTransform();
-      });
+      bbox.setHost(host).listen((rect: Rect) => {});
     }
 
     return () => {
-      mag.done?.();
+      bbox.done?.();
     };
   }, [editorTool]);
 
@@ -46,22 +49,31 @@ export function Workspace() {
   }
 
   return (
-    <div className={"w-full h-full relative " + classes} ref={hostRef}>
-      <TransformWrapper
-        panning={{ disabled: editorTool !== EditorTool.pan }}
-        minScale={0.3}
-        maxScale={1}
-        wheel={{ smoothStep: 0.001, step: 0.2 }}
-        ref={transformRef}
-      >
-        <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
-          <World />
-        </TransformComponent>
-      </TransformWrapper>
+    <div className={"w-full h-full relative " + classes}>
+      <div className="w-full h-full relative" ref={hostRef}>
+        <TransformWrapper
+          onTransformed={handleTransform}
+          panning={{ disabled: editorTool !== EditorTool.pan }}
+          minScale={0.3}
+          maxScale={1}
+          wheel={{ smoothStep: 0.001, step: 0.2 }}
+          ref={transformRef}
+        >
+          <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+            <World />
+          </TransformComponent>
+        </TransformWrapper>
+      </div>
 
       <div className="absolute tools flex justify-items-center align-items-center m-2">
         <Tools editorTool={editorTool!} setEditorTool={setEditorTool} />
       </div>
+
+      {hostRef.current && (
+        <div className="absolute navigator flex justify-items-center align-items-center m-2">
+          <Navigator host={hostRef.current} />
+        </div>
+      )}
     </div>
   );
 }

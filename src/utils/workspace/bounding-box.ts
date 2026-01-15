@@ -1,8 +1,6 @@
-import type { Coords } from "@/types/global/Coords";
+import type { Rect } from "./bounding-box-tool";
 
-type Rect = { x: number; y: number; w: number; h: number };
-
-export class MagBoundingBox {
+export class BoundingBox {
   constructor(private readonly _host: HTMLDivElement) {}
 
   private _elem?: HTMLSpanElement;
@@ -33,27 +31,12 @@ export class MagBoundingBox {
     this._toggle(false);
   }
 
-  private _rectFromPoints(a: Coords, b: Coords): Rect {
-    const x = Math.min(a.x, b.x);
-    const y = Math.min(a.y, b.y);
-    return {
-      x,
-      y,
-      w: Math.abs(b.x - a.x),
-      h: Math.abs(b.y - a.y),
-    };
-  }
-
-  update(a: Coords, b: Coords) {
-    if (!b) {
-      return;
-    }
-
+  update(rect: Rect) {
     this._toggle(true);
 
     const elem = this._elem!;
 
-    const { x, y, h, w } = this._rectFromPoints(a, b);
+    const { x, y, h, w } = rect;
 
     elem.style.left = x + "px";
     elem.style.top = y + "px";

@@ -1,16 +1,30 @@
 import { Coords } from "@/types/global/Coords";
 import { DragAndDrop, type DragAndDropPayload } from "../drag-and-drop";
-import { MagBoundingBox } from "./mag-bound-box";
+import { BoundingBox } from "./bounding-box";
 
-type MagZoomListener = (v: [Coords, Coords]) => void;
+type MagZoomListener = (rect: Rect) => void;
 
-export class MagZoom {
+export type Rect = { x: number; y: number; w: number; h: number };
+
+export class BoundingBoxTool {
   private _host?: HTMLElement;
 
-  private _magBoundingBox?: MagBoundingBox;
+  private _boundingBox?: BoundingBox;
 
   private _bbCoords: [Coords?, Coords?] = [undefined, undefined];
+
   private _listener?: MagZoomListener;
+
+  private _rectFromPoints(a: Coords, b: Coords): Rect {
+    const x = Math.min(a.x, b.x);
+    const y = Math.min(a.y, b.y);
+    return {
+      x,
+      y,
+      w: Math.abs(b.x - a.x),
+      h: Math.abs(b.y - a.y),
+    };
+  }
 
   private _mouseMove({ type, e }: DragAndDropPayload): void {
     const currentCoords = Coords.eventToCoord(e);
@@ -21,17 +35,14 @@ export class MagZoom {
 
     this._bbCoords[1] = currentCoords;
 
+    const rect = this._rectFromPoints(this._bbCoords[0]!, this._bbCoords[1]!);
+
     if (type === "done") {
-      this._listener!([this._bbCoords[0]!, this._bbCoords[1]!]);
-      return this._magBoundingBox!.hide();
+      this._listener!(rect);
+      return this._boundingBox!.hide();
     }
 
-    this._magBoundingBox!.update(this._bbCoords[0]!, this._bbCoords[1]!);
-  }
-
-  private _tranformPosition(coords: Coords): Coords {
-    const rect = this._host!.getBoundingClientRect();
-    return new Coords(coords.x - rect.left, coords.y - rect.top);
+    this._boundingBox!.update(rect);
   }
 
   done?: () => void;
@@ -39,7 +50,7 @@ export class MagZoom {
   setHost(host: HTMLDivElement): this {
     this._host = host;
 
-    this._magBoundingBox = new MagBoundingBox(host).init();
+    this._boundingBox = new BoundingBox(host).init();
 
     return this;
   }
@@ -52,6 +63,6 @@ export class MagZoom {
 
     dd.listen();
 
-    this.done = dd.done;
+    this.done = () => dd.done();
   }
 }

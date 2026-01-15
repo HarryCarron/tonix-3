@@ -1,3 +1,3 @@
 export const ENV = {
-  worldDims: 6000,
+  worldDims: 4000,
 };
