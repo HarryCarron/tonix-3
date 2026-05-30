@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import "./Navigator.css";
-import { ENV } from "@/env";
+import { NavigatorController } from "@/utils/workspace/navigator";
 
 interface NavigatorProps {
   host: HTMLDivElement;
@@ -9,24 +9,30 @@ interface NavigatorProps {
 export default function Navigator({ host }: NavigatorProps) {
   const scaleVal = 0.032;
 
+  const worldRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<HTMLDivElement | null>(null);
+  const navigatorRef = useRef<NavigatorController>(new NavigatorController());
 
   useEffect(() => {
-    const camera = cameraRef.current!;
-    new ResizeObserver((entry: ResizeObserverEntry[]) => {
-      const { width, height } = entry[0].contentRect;
+    const navigator = navigatorRef.current;
+    const world = worldRef.current;
+    const camera = cameraRef.current;
 
-      camera.style.width = `${width * scaleVal}px`;
-      camera.style.height = `${height * scaleVal}px`;
-    }).observe(host);
-  }, []);
+    if (!world || !camera || !host) {
+      return;
+    }
+
+    navigator
+      ?.setScaleVal(scaleVal)
+      .setHostElement(host)
+      .setWorldElement(world!)
+      .setCameraElement(camera!)
+      .init();
+  }, [worldRef, cameraRef, host]);
 
   return (
     <div
-      style={{
-        height: ENV.worldDims * scaleVal,
-        width: ENV.worldDims * scaleVal,
-      }}
+      ref={worldRef}
       id="navigator:world"
       className="navigator flex shadow-xl absolute bg-stone-100 p-1 rounded-lg border-2 border-stone-300"
     >

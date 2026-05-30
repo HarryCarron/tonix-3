@@ -13,6 +13,7 @@ import {
   type Rect,
 } from "@/utils/workspace/bounding-box-tool";
 import Navigator from "../navigator/Navigator";
+import { patientLoad } from "@/utils/workspace/patient-load";
 
 export function Workspace() {
   const [editorTool, setEditorTool] = useState<EditorTool | undefined>();
@@ -25,7 +26,9 @@ export function Workspace() {
 
   let classes = "";
 
-  const handleTransform = useCallback(() => {}, []);
+  useEffect(() => {
+    patientLoad.setSource("camera", transformRef.current);
+  }, []);
 
   useEffect(() => {
     const bbox = boundingBoxRef.current!;
@@ -52,7 +55,6 @@ export function Workspace() {
     <div className={"w-full h-full relative " + classes}>
       <div className="w-full h-full relative" ref={hostRef}>
         <TransformWrapper
-          onTransformed={handleTransform}
           panning={{ disabled: editorTool !== EditorTool.pan }}
           minScale={0.3}
           maxScale={1}
