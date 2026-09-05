@@ -20,19 +20,14 @@ npm run dev
 Other scripts:
 
 ```bash
-npm run build     # tsc -b + vite build
-npm run lint       # eslint .
-npm run preview     # preview a production build
+npm run build          # tsc -b + vite build
+npm run lint            # eslint .
+npm run preview          # preview a production build
+npm run storybook         # Storybook dev server on :6006, for previewing components in isolation
+npm run build-storybook    # static Storybook build
 ```
 
 ## Project structure
-
-This repo contains two independent projects:
-
-- **root (`/`)** — the app itself, described above.
-- **`taskbox/`** — a separate Storybook sandbox (based on Chromatic's intro-to-storybook template) used to develop and preview individual controls in isolation. It has its own `package.json` and uses `yarn`, and imports components directly from the root project's `src/`. See `taskbox/README.md` for details.
-
-### Root project layout
 
 ```
 src/

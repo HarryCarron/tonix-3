@@ -5,22 +5,22 @@ export interface Position {
 
 export interface DragAndDropPayload {
   type: "start" | "dragging" | "done";
-  e: MouseEvent;
+  e: Event;
 }
 
 type DragAndDropHandler = (v: DragAndDropPayload) => void;
 
 export class DragAndDrop {
-  private readonly _host: HTMLElement;
+  private readonly _host: HTMLElement | SVGSVGElement;
   private readonly _handler: DragAndDropHandler;
 
-  private _mouseDown: (e: MouseEvent) => void;
+  private _mouseDown: (e: Event) => void;
 
-  private _mouseMove: (e: MouseEvent) => void;
+  private _mouseMove: (e: Event) => void;
 
-  private _mouseUp: (e: MouseEvent) => void;
+  private _mouseUp: (e: Event) => void;
 
-  constructor(host: HTMLElement, handler: DragAndDropHandler) {
+  constructor(host: HTMLElement | SVGSVGElement, handler: DragAndDropHandler) {
     this._host = host;
     this._handler = handler;
 
@@ -29,7 +29,7 @@ export class DragAndDrop {
     this._mouseUp = this.__mouseUp.bind(this);
   }
 
-  private __mouseDown(e: MouseEvent): void {
+  private __mouseDown(e: Event): void {
     this._handler({
       type: "start",
       e,
@@ -38,14 +38,14 @@ export class DragAndDrop {
     this._host.addEventListener("mouseup", this._mouseUp);
   }
 
-  private __mouseMove(e: MouseEvent): void {
+  private __mouseMove(e: Event): void {
     this._handler({
       type: "dragging",
       e,
     });
   }
 
-  private __mouseUp(e?: MouseEvent): void {
+  private __mouseUp(e?: Event): void {
     if (e) {
       this._handler({
         type: "done",

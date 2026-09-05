@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { DragAndDrop } from "./../../../utils/drag-and-drop";
 import "./RotaryControl.css";
-import { Input } from "@/components/ui/input";
+import { Input } from "../../ui/input";
 
 export default function RotaryControl() {
   const rotaryControl = useRef<SVGSVGElement | null>(null);
@@ -11,18 +11,14 @@ export default function RotaryControl() {
   const value = 0.5;
 
   useEffect(() => {
-    new DragAndDrop<SVGSVGElement>(
-      rotaryControl.current!,
-      () => {},
-      () => {}
-    );
+    const dd = new DragAndDrop(rotaryControl.current!, (e) => {});
   }, []);
 
   function polarToCartesian(
     centerX: number,
     centerY: number,
     radius: number,
-    angleInDegrees: number
+    angleInDegrees: number,
   ) {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
 
@@ -37,7 +33,7 @@ export default function RotaryControl() {
     y: number,
     radius: number,
     startAngle: number,
-    endAngle: number
+    endAngle: number,
   ) {
     const start = polarToCartesian(x, y, radius, endAngle);
     const end = polarToCartesian(x, y, radius, startAngle);
@@ -92,7 +88,7 @@ export default function RotaryControl() {
               size / 2,
               size / 2,
               210,
-              210 + value * 300
+              210 + value * 300,
             )}
           />
           <g

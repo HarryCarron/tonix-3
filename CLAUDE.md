@@ -4,30 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository layout
 
-This repo actually contains **two independent npm/yarn projects** — do not mix their tooling:
-
-- **root (`/`)** — the main app: a React + TypeScript + Vite synth/node-editor workspace. Uses `npm`.
-- **`taskbox/`** — a separate Storybook sandbox (based on Chromatic's intro-to-storybook template), used to develop and preview individual controls (e.g. `RotaryControl`) in isolation. Uses `yarn` (yarn 4, `.yarnrc.yml`, `taskbox/yarn.lock`) and has its own `package.json`, `tsconfig*.json`, and `eslint` config. It imports components directly from `../../../src/...` in the root project (see `taskbox/src/stories/`), so it is a dev/preview harness for root's components, not a standalone app.
-
-When a task only mentions "the app", "the editor", or "the workspace", it means the root project. When it mentions Storybook or stories, it means `taskbox/`.
+Single project, single `npm` toolchain — a React + TypeScript + Vite synth/node-editor workspace. Storybook is not a separate app: it's wired directly into this `package.json`/`node_modules`, configured via root `.storybook/main.ts` + `preview.ts`, with stories living in `src/stories/` and importing components with the normal `@/*` alias (e.g. `@/components/controls/rotary-control/RotaryControl`). There used to be a standalone `taskbox/` Storybook sandbox (separate `yarn` project, own `node_modules`) — it was deleted in favor of this in-project setup; don't recreate that split.
 
 ## Commands
 
-Root project (run from repo root):
 ```
-npm run dev        # start Vite dev server
-npm run build       # tsc -b + vite build
-npm run lint        # eslint .
-npm run preview      # preview production build
+npm run dev            # start Vite dev server
+npm run build            # tsc -b + vite build
+npm run lint             # eslint .
+npm run preview           # preview production build
+npm run storybook         # Storybook dev server on :6006
+npm run build-storybook    # static Storybook build
 ```
-
-`taskbox/` (run from `taskbox/`, using yarn):
-```
-yarn storybook          # Storybook dev server on :6006
-yarn build-storybook     # static Storybook build
-yarn dev / yarn build / yarn preview   # taskbox's own throwaway Vite app
-```
-There is no test runner wired up in either project's `package.json` scripts (Storybook has `@storybook/addon-vitest`/vitest installed in `taskbox`, but no root-level test script exists yet).
+There is no test runner wired up yet.
 
 ## Architecture (root project)
 
@@ -47,6 +36,16 @@ The app is a node-based editor for building synth/audio patches on a large panna
 - **`reducers/navigator.tsx`** — a reducer for navigator-related state (`nodeAreaDims`); note it isn't currently wired into a `useReducer` call anywhere obvious — check current usage before assuming it's live.
 - Styling: Tailwind v4 (via `@tailwindcss/vite`, no separate `tailwind.config`) plus per-component `.css` files colocated with their `.tsx`. `components/ui/*` are shadcn/ui primitives (`components.json`: style "new-york", stone base color, no RSC).
 - Path alias `@/*` → `src/*` (configured in both `vite.config.ts` and `tsconfig.json`).
+
+### Audio engine
+
+Sound is not implemented yet — `Polysynth` and `Keyboard` are currently visual mockups only, with no audio wiring or node-graph/patch-cable model. When implementing audio, use **Tone.js** as the layer on top of the Web Audio API (not raw `AudioContext`/`AudioNode`s directly) — e.g. `Tone.PolySynth`, `Tone.Oscillator`, `Tone.Transport`. `tone` is not yet in `package.json`; add it when audio work begins.
+
+**Planned injection/bootstrap pattern (agreed, not yet built):** an `AudioEngine` facade class will own `Tone.getContext()`, the master bus, and any internal routing/config the user doesn't control directly — node components must go through this facade rather than importing `Tone` themselves. It's a two-state object:
+- **Constructed** — the facade exists and is safe to hand out. Register it via the existing `patientLoad` singleton (`utils/workspace/patient-load.ts`) as soon as it's built at app bootstrap: `patientLoad.setSource("audioEngine", engine)`. Node components fetch it with `patientLoad.getSource("audioEngine", ...)`, the same pattern already used for the `"camera"` ref in `Workspace.tsx` — this only means "the object exists," not "audio can play."
+- **Running** — the underlying `AudioContext` must be resumed via `Tone.start()` inside a real user-gesture handler (browser autoplay policy; cannot be done at page load). This readiness state is the engine's own concern, not `patientLoad`'s — expose it as something like `engine.ready` / `engine.whenReady()`, checked by nodes after they've already obtained the reference. The first pointer interaction on the canvas (`Workspace`'s existing pointer handling via `DragAndDrop`) is the natural place to call `engine.start()`.
+
+Do not overload `patientLoad`'s existence-based semantics to also mean "ready to play" — keep the two states separate.
 
 ### Coordinate model
 
