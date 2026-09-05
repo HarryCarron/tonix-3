@@ -5,9 +5,21 @@ const meta = {
   component: RotaryControl,
   title: "Rotary Control",
   tags: ["autodocs"],
+  argTypes: {
+    size: {
+      control: "select",
+      options: ["sm", "md"],
+    },
+  },
 } satisfies Meta<typeof RotaryControl>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Small: Story = {
+  args: { size: "sm" },
+};
+
+export const Medium: Story = {
+  args: { size: "md" },
+};

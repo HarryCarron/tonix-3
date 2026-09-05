@@ -1,62 +1,115 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { DragAndDrop } from "./../../../utils/drag-and-drop";
 import "./RotaryControl.css";
 import { Input } from "../../ui/input";
 
-export default function RotaryControl() {
+// Angle convention throughout this file: 0deg = up, increasing clockwise.
+const TRACK_START_ANGLE = 210;
+const TRACK_SWEEP_ANGLE = 300;
+
+// pixels of vertical drag needed to sweep the value from 0 to 1
+const DRAG_PX_PER_FULL_SWEEP = 100;
+
+export type RotaryControlSize = "sm" | "md";
+
+const SIZE_PX: Record<RotaryControlSize, number> = {
+  sm: 23,
+  md: 40,
+};
+
+interface RotaryControlProps {
+  size?: RotaryControlSize;
+}
+
+function polarToCartesian(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleInDegrees: number,
+) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians),
+  };
+}
+
+function describeArc(
+  x: number,
+  y: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number,
+) {
+  const start = polarToCartesian(x, y, radius, endAngle);
+  const end = polarToCartesian(x, y, radius, startAngle);
+
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return [
+    "M",
+    start.x,
+    start.y,
+    "A",
+    radius,
+    radius,
+    0,
+    largeArcFlag,
+    0,
+    end.x,
+    end.y,
+  ].join(" ");
+}
+
+function valueToAngle(value: number) {
+  return TRACK_START_ANGLE + value * TRACK_SWEEP_ANGLE;
+}
+
+export default function RotaryControl({ size = "sm" }: RotaryControlProps) {
   const rotaryControl = useRef<SVGSVGElement | null>(null);
 
-  const size = 23;
+  const ddRef = useRef<DragAndDrop | null>(null);
 
-  const value = 0.5;
+  const lastYRef = useRef<number | null>(null);
+
+  const sizePx = SIZE_PX[size];
+
+  const [value, setValue] = useState(0.5);
 
   useEffect(() => {
-    const dd = new DragAndDrop(rotaryControl.current!, (e) => {});
+    const dd = new DragAndDrop().setHost(rotaryControl.current!);
+
+    dd.listen(({ type, e }) => {
+      const clientY = (e as MouseEvent).clientY;
+
+      if (type === "start") {
+        lastYRef.current = clientY;
+        return;
+      }
+
+      if (type === "dragging") {
+        // dragging up increases the value, so invert the raw screen delta
+        const deltaY = lastYRef.current! - clientY;
+        lastYRef.current = clientY;
+
+        setValue((v) =>
+          Math.min(1, Math.max(0, v + deltaY / DRAG_PX_PER_FULL_SWEEP)),
+        );
+      }
+    });
+
+    ddRef.current = dd;
+
+    return () => {
+      ddRef.current?.done();
+    };
   }, []);
 
-  function polarToCartesian(
-    centerX: number,
-    centerY: number,
-    radius: number,
-    angleInDegrees: number,
-  ) {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians),
-    };
-  }
-
-  function describeArc(
-    x: number,
-    y: number,
-    radius: number,
-    startAngle: number,
-    endAngle: number,
-  ) {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-    return [
-      "M",
-      start.x,
-      start.y,
-      "A",
-      radius,
-      radius,
-      0,
-      largeArcFlag,
-      0,
-      end.x,
-      end.y,
-    ].join(" ");
-  }
+  const valueAngle = valueToAngle(value);
 
   return (
-    <div className="w-[40px]">
+    <div style={{ width: sizePx + 17 }}>
       <div className="flex flex-col mb-2">
         <div className="flex text-sm justify-center align-center">
           <Input className="p-2 h-6" value={(value * 100).toFixed(0)} />
@@ -66,8 +119,8 @@ export default function RotaryControl() {
       <div className="flex justify-center">
         <svg
           className="overflow-visible"
-          height={size}
-          width={size}
+          height={sizePx}
+          width={sizePx}
           ref={rotaryControl}
         >
           <path
@@ -75,7 +128,13 @@ export default function RotaryControl() {
             strokeWidth="2"
             strokeLinecap="round"
             className="stroke-stone-300"
-            d={describeArc(size / 2, size / 2, size / 2, 210, 510)}
+            d={describeArc(
+              sizePx / 2,
+              sizePx / 2,
+              sizePx / 2,
+              TRACK_START_ANGLE,
+              TRACK_START_ANGLE + TRACK_SWEEP_ANGLE,
+            )}
           />
 
           <path
@@ -84,28 +143,28 @@ export default function RotaryControl() {
             strokeWidth="2"
             strokeLinecap="round"
             d={describeArc(
-              size / 2,
-              size / 2,
-              size / 2,
-              210,
-              210 + value * 300,
+              sizePx / 2,
+              sizePx / 2,
+              sizePx / 2,
+              TRACK_START_ANGLE,
+              valueAngle,
             )}
           />
           <g
             className="grabbable rotating-component"
-            style={{ transform: `rotate(${30 + value * 300}deg)` }}
+            style={{ transform: `rotate(${valueAngle - 180}deg)` }}
           >
             <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={size / 2}
+              cx={sizePx / 2}
+              cy={sizePx / 2}
+              r={sizePx / 2}
               fill="transparent"
             />
             <line
-              x1={size / 2}
-              y1={size - 6}
-              x2={size / 2}
-              y2={size}
+              x1={sizePx / 2}
+              y1={sizePx - 6}
+              x2={sizePx / 2}
+              y2={sizePx}
               strokeWidth="2"
               strokeLinecap="round"
               stroke="black"

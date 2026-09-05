@@ -3,6 +3,12 @@ export interface Position {
   y: number;
 }
 
+/**
+ * Reported to a `DragAndDrop` handler at each stage of a drag: `"start"` on
+ * mousedown, `"dragging"` on every subsequent mousemove, `"done"` on
+ * mouseup. `e` is the raw DOM mouse event for that stage; consumers convert
+ * it into whatever coordinate space or delta they actually need.
+ */
 export interface DragAndDropPayload {
   type: "start" | "dragging" | "done";
   e: Event;
@@ -10,36 +16,49 @@ export interface DragAndDropPayload {
 
 type DragAndDropHandler = (v: DragAndDropPayload) => void;
 
+/**
+ * Generic mouse-drag primitive. Attaches `mousedown` to a host element to
+ * detect the start of a drag, then tracks `mousemove`/`mouseup` on
+ * `document` (not the host) for the rest of the gesture, since the pointer
+ * can move outside the host's bounds mid-drag and mouse events only bubble
+ * through the actual ancestor chain of whatever element they're currently
+ * over.
+ *
+ * Usage: `new DragAndDrop().setHost(el).listen(handler)`, then `done()` to
+ * stop listening (e.g. on unmount).
+ */
 export class DragAndDrop {
-  private readonly _host: HTMLElement | SVGSVGElement;
-  private readonly _handler: DragAndDropHandler;
+  private _host?: HTMLElement | SVGSVGElement;
 
-  private _mouseDown: (e: Event) => void;
+  private _handler?: DragAndDropHandler;
 
-  private _mouseMove: (e: Event) => void;
+  private _mouseDown = this.__mouseDown.bind(this);
 
-  private _mouseUp: (e: Event) => void;
+  private _mouseMove = this.__mouseMove.bind(this);
 
-  constructor(host: HTMLElement | SVGSVGElement, handler: DragAndDropHandler) {
+  private _mouseUp = this.__mouseUp.bind(this);
+
+  /** Sets the element that starts a drag on mousedown. Call before `listen`. */
+  setHost(host: HTMLElement | SVGSVGElement): this {
     this._host = host;
-    this._handler = handler;
 
-    this._mouseDown = this.__mouseDown.bind(this);
-    this._mouseMove = this.__mouseMove.bind(this);
-    this._mouseUp = this.__mouseUp.bind(this);
+    return this;
   }
 
   private __mouseDown(e: Event): void {
-    this._handler({
+    this._handler!({
       type: "start",
       e,
     });
-    this._host.addEventListener("mousemove", this._mouseMove);
-    this._host.addEventListener("mouseup", this._mouseUp);
+    // bound to document, not _host: once a drag starts, the pointer can
+    // move outside the host's bounds, and mouse events only bubble through
+    // the actual ancestor chain of whatever element they're currently over
+    document.addEventListener("mousemove", this._mouseMove);
+    document.addEventListener("mouseup", this._mouseUp);
   }
 
   private __mouseMove(e: Event): void {
-    this._handler({
+    this._handler!({
       type: "dragging",
       e,
     });
@@ -47,23 +66,26 @@ export class DragAndDrop {
 
   private __mouseUp(e?: Event): void {
     if (e) {
-      this._handler({
+      this._handler!({
         type: "done",
         e,
       });
     } else {
-      this._host.removeEventListener("mousedown", this._mouseDown);
+      this._host!.removeEventListener("mousedown", this._mouseDown);
     }
 
-    this._host.removeEventListener("mousemove", this._mouseMove);
-    this._host.removeEventListener("mouseup", this._mouseUp);
+    document.removeEventListener("mousemove", this._mouseMove);
+    document.removeEventListener("mouseup", this._mouseUp);
   }
 
+  /** Stops listening entirely, including removing the host's mousedown listener. */
   done(): void {
     this.__mouseUp();
   }
 
-  listen(): void {
+  /** Starts listening for drags on the host, invoking `handler` at each stage. */
+  listen(handler: DragAndDropHandler): void {
+    this._handler = handler;
     this._host!.addEventListener("mousedown", this._mouseDown);
   }
 }

@@ -6,6 +6,15 @@ type MagZoomListener = (rect: Rect) => void;
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
+/**
+ * Drag-to-select-a-region tool, used by the "mag" (zoom-to-region) editor
+ * tool. Wraps a `DragAndDrop` (for the mouse gesture) and a `BoundingBox`
+ * (the visible selection overlay) to turn a click-drag into a `Rect`
+ * spanning the drag's start and current points.
+ *
+ * Usage: `new BoundingBoxTool().setHost(el).listen(rect => ...)`, then
+ * `done()` to stop listening (e.g. when the editor tool changes).
+ */
 export class BoundingBoxTool {
   private _host?: HTMLElement;
 
@@ -45,8 +54,10 @@ export class BoundingBoxTool {
     this._boundingBox!.update(rect);
   }
 
+  /** Stops listening for drags. Assigned once `listen` is called. */
   done?: () => void;
 
+  /** Sets the element the selection drag happens over, and mounts the overlay. */
   setHost(host: HTMLDivElement): this {
     this._host = host;
 
@@ -55,13 +66,14 @@ export class BoundingBoxTool {
     return this;
   }
 
+  /** Starts listening for a selection drag, calling `l` with the resulting rect once the drag ends. */
   listen(l: MagZoomListener): void {
     this._listener = l;
-    const dd = new DragAndDrop(this._host!, (e) => {
+    const dd = new DragAndDrop().setHost(this._host!);
+
+    dd.listen((e) => {
       this._mouseMove(e);
     });
-
-    dd.listen();
 
     this.done = () => dd.done();
   }
