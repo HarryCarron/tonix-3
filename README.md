@@ -1,55 +1,63 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
 # tonix-3
+
+A node-based synth/audio patch editor: a large pannable, zoomable canvas ("world") on which you place instrument and control nodes (keyboard, polysynth, etc.) and wire them up, similar in spirit to tools like Max/MSP or Pure Data but built for the web.
+
+## Tech stack
+
+- React 19 + TypeScript
+- Vite 6
+- Tailwind CSS v4 (via `@tailwindcss/vite`, no separate config file)
+- [`react-zoom-pan-pinch`](https://github.com/BetterTyped/react-zoom-pan-pinch) for canvas pan/zoom
+- [shadcn/ui](https://ui.shadcn.com/) primitives (style: "new-york", base color: stone)
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+Other scripts:
+
+```bash
+npm run build     # tsc -b + vite build
+npm run lint       # eslint .
+npm run preview     # preview a production build
+```
+
+## Project structure
+
+This repo contains two independent projects:
+
+- **root (`/`)** — the app itself, described above.
+- **`taskbox/`** — a separate Storybook sandbox (based on Chromatic's intro-to-storybook template) used to develop and preview individual controls in isolation. It has its own `package.json` and uses `yarn`, and imports components directly from the root project's `src/`. See `taskbox/README.md` for details.
+
+### Root project layout
+
+```
+src/
+  components/
+    editor/       # Workspace, World (canvas), Menu, Tools, Navigator, viewport tools
+    nodes/        # Draggable node chrome + node types (e.g. Keyboard)
+    instruments/   # Instrument implementations (e.g. Polysynth)
+    controls/      # Reusable UI controls (rotary control, sliders, etc.)
+    ui/           # shadcn/ui primitives
+  context/workspace/  # Workspace controller context (world DOM ref)
+  reducers/       # State reducers (e.g. navigator)
+  utils/
+    workspace/     # Imperative canvas helpers: viewport math, minimap, bounding-box tool, patient-load registry
+    node-map.tsx    # Registry mapping node-type keys to components
+    drag-and-drop.tsx # Generic imperative drag helper
+  types/         # Shared type/enum definitions (e.g. EditorTool)
+  env.ts         # Global constants (e.g. world size)
+```
+
+### Core concepts
+
+- **World** — a fixed-size square canvas (`ENV.worldDims` in `src/env.ts`) containing absolutely-positioned nodes and a dot-grid background.
+- **Workspace** — wraps `World` in `react-zoom-pan-pinch` for pan/zoom, and overlays floating UI (tool selector, minimap navigator) on top.
+- **Editor tools** — `add`, `pan`, and `mag` (zoom-to-region via a drag-to-select bounding box), selected via the toolbar and driving canvas behavior/cursor.
+- **Nodes & instruments** — draggable content placed on the canvas, wrapped in common `NodeWrapper` chrome (title, mute/settings/close controls). New node types are registered in `utils/node-map.tsx`.
+- **Navigator** — a minimap driven by `NavigatorController`, kept in sync with the real world size via a `ResizeObserver`.
+
+See `todo.md` for the in-progress mouse-anchored pan/zoom refactor checklist.
