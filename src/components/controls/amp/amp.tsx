@@ -27,20 +27,11 @@ function trackGlobalMouseMove(onMouseMove: (e: globalThis.MouseEvent) => void) {
   window.addEventListener("mouseup", stop);
 }
 
-interface Line {
-  // todo move to dedicated file
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
+// matches CanvasUtilities.line's (x1, y1, x2, y2) signature
+type LineParams = [x1: number, y1: number, x2: number, y2: number];
 
-interface Circle {
-  // todo move to dedicated file
-  x: number;
-  y: number;
-  r: number;
-}
+// matches CanvasUtilities.circle's (x, y, r) signature
+type CircleParams = [x: number, y: number, r: number];
 
 interface AmpEnvelope {
   // todo move to dedicated file
@@ -71,11 +62,33 @@ interface InteractionPanel {
 
 type ADSR = AmpEnvelope & AmpCurve;
 
+// cumulative X position where each stage ends, shared by the canvas draw
+// (drawAmp) and the SVG interaction layer (get) so they can't drift apart
+function computeStageXPositions(
+  attack: number,
+  decay: number,
+  sustainWidth: number,
+  release: number,
+  xPad: number,
+  totalXTravel: number,
+): [number, number, number, number] {
+  const stages = [attack, decay, sustainWidth, release];
+
+  return stages.map(
+    (_, i) => xPad + totalXTravel * stages.slice(0, i + 1).reduce((a, b) => a + b),
+  ) as [number, number, number, number];
+}
+
 export function Amp() {
   const xPad = 10;
   const yPad = 10;
 
-  const [, viewReady] = useState(false);
+  // drives the interaction SVG's width/height in the JSX below; the other
+  // measured values (floor, totalXTravel, sustainHeight, etc.) are only
+  // read inside drawAmp's canvas math, so they stay in the ampValues ref
+  const [dims, setDims] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   const [amp, setAmp] = useState<ADSR>({
     attack: 0.1,
@@ -118,7 +131,10 @@ export function Amp() {
       ampValues.current.height = container.current.offsetHeight;
       ampValues.current.width = container.current.offsetWidth;
 
-      viewReady(true);
+      setDims({
+        width: container.current.offsetWidth,
+        height: container.current.offsetHeight,
+      });
     }
   }, []);
 
@@ -172,15 +188,14 @@ export function Amp() {
     ampValues.current.sustainHeight =
       ampValues.current.floor -
       amp.sustain * (ampValues.current.height - yPad * 2);
-    const getXpositions = () => {
-      return [amp.attack, amp.decay, amp.sustainWidth, amp.release].map(
-        (_, i, o) =>
-          xPad +
-          ampValues.current.totalXTravel *
-            o.slice(0, i + 1).reduce((a, b) => a + b),
-      );
-    };
-    const [attackX, decayX, sustainWidthX, releaseX] = getXpositions();
+    const [attackX, decayX, sustainWidthX, releaseX] = computeStageXPositions(
+      amp.attack,
+      amp.decay,
+      amp.sustainWidth,
+      amp.release,
+      xPad,
+      ampValues.current.totalXTravel,
+    );
     const sustainHeight = ampValues.current.sustainHeight;
     const floor = ampValues.current.floor;
     const canvas = utils.current.canvas;
@@ -188,18 +203,18 @@ export function Amp() {
       .clear()
       .styleProfile("baseLine")
       .multiple(
-        (ctx: CanvasUtilities, params: Line) => {
-          const { x1, x2, y1, y2 } = params;
-          ctx.line(x1, x2, y1, y2);
+        (ctx: CanvasUtilities, params: LineParams) => {
+          const [x1, y1, x2, y2] = params;
+          ctx.line(x1, y1, x2, y2);
         },
         [xPad, floor, ampValues.current.width - xPad, floor],
         [xPad, floor, xPad, yPad],
       )
       .styleProfile("ampGuide")
       .multiple(
-        (ctx: CanvasUtilities, params: Line) => {
-          const { x1, x2, y1, y2 } = params;
-          ctx.line(x1, x2, y1, y2);
+        (ctx: CanvasUtilities, params: LineParams) => {
+          const [x1, y1, x2, y2] = params;
+          ctx.line(x1, y1, x2, y2);
         },
         [attackX, floor, attackX, yPad],
         [decayX, floor, decayX, yPad],
@@ -244,14 +259,7 @@ export function Amp() {
         ],
         [
           (ctx: CanvasUtilities) =>
-            ctx.curve(
-              attackX,
-              yPad,
-              decayX,
-              yPad,
-              decayX,
-              sustainHeight,
-            ),
+            ctx.curve(attackX, yPad, decayX, yPad, decayX, sustainHeight),
           amp.decayCurve === 2,
         ],
         // sustain
@@ -303,8 +311,8 @@ export function Amp() {
       )
       .styleProfile("ampHandle")
       .multiple(
-        (ctx: CanvasUtilities, params: Circle) => {
-          const { x, y, r } = params;
+        (ctx: CanvasUtilities, params: CircleParams) => {
+          const [x, y, r] = params;
           ctx.circle(x, y, r);
         },
         [attackX, yPad, 2],
@@ -433,20 +441,20 @@ export function Amp() {
         return;
     }
 
-    if (currentCurve! && set!) {
-      if (currentCurve === 2) {
-        currentCurve = 0;
-      } else {
-        currentCurve = currentCurve + 1;
-      }
-
-      set();
+    // every case above either returns or assigns both currentCurve and set,
+    // so both are always assigned by this point (0 is a valid curve here,
+    // so this can't be a truthiness check on currentCurve)
+    if (currentCurve === 2) {
+      currentCurve = 0;
+    } else {
+      currentCurve = currentCurve + 1;
     }
+
+    set();
   };
 
   const get = (id: number) => {
     const sustainHeight = ampValues.current.sustainHeight;
-    const all = [amp.attack, amp.decay, amp.sustainWidth, amp.release];
     const pointY = [
       yPad,
       sustainHeight,
@@ -454,17 +462,22 @@ export function Amp() {
       ampValues.current.floor,
     ];
 
-    const x =
-      xPad +
-      all.slice(0, id).reduce((a, b) => a + b, 0) *
-        ampValues.current.totalXTravel;
-    const width = all[id] * ampValues.current.totalXTravel;
+    const xPositions = computeStageXPositions(
+      amp.attack,
+      amp.decay,
+      amp.sustainWidth,
+      amp.release,
+      xPad,
+      ampValues.current.totalXTravel,
+    );
+    const x = id === 0 ? xPad : xPositions[id - 1];
+    const width = xPositions[id] - x;
 
     return {
       x,
       width,
       handle: {
-        x: x + width,
+        x: xPositions[id],
         y: pointY[id],
       },
     };
@@ -472,13 +485,13 @@ export function Amp() {
 
   return (
     <div className="amp-container shadow-4">
-      <div className="canvas-layer h-100 d-flex-col styled">
+      <div className="canvas-layer h-100 flex flex-col styled">
         <div className="flex-1" ref={container}>
           <canvas height="0" width="0" ref={canvas}></canvas>
           <svg
             className="interaction-layer"
-            height={ampValues.current.height}
-            width={ampValues.current.width}
+            height={dims?.height ?? 0}
+            width={dims?.width ?? 0}
           >
             {[0, 1, 2, 3].map((i) =>
               interactionPanel(get(i), i, () => ampClicked(i)),
@@ -492,19 +505,47 @@ export function Amp() {
       <div className="d-flex knob-row space-around w-100">
         <div className="control-container  envelope-knob flex-1">
           <div className="center-child-xy header-item"> Attack </div>
-          <RotaryControl size="sm" />
+          <RotaryControl
+            size="sm"
+            value={amp.attack}
+            onChange={(attack) =>
+              setAmp((state) =>
+                widthValid({ ...state, attack }) ? { ...state, attack } : state,
+              )
+            }
+          />
         </div>
         <div className="control-container envelope-knob flex-1">
           <div className="center-child-xy header-item"> Decay </div>
-          <RotaryControl size="sm" />
+          <RotaryControl
+            size="sm"
+            value={amp.decay}
+            onChange={(decay) =>
+              setAmp((state) =>
+                widthValid({ ...state, decay }) ? { ...state, decay } : state,
+              )
+            }
+          />
         </div>
         <div className="control-container  envelope-knob flex-1">
           <div className="center-child-xy header-item"> Sustain </div>
-          <RotaryControl size="sm" />
+          <RotaryControl
+            size="sm"
+            value={amp.sustain}
+            onChange={(sustain) => setAmp((state) => ({ ...state, sustain }))}
+          />
         </div>
         <div className="control-container  envelope-knob flex-1">
           <div className="center-child-xy header-item"> Release </div>
-          <RotaryControl size="sm" />
+          <RotaryControl
+            size="sm"
+            value={amp.release}
+            onChange={(release) =>
+              setAmp((state) =>
+                widthValid({ ...state, release }) ? { ...state, release } : state,
+              )
+            }
+          />
         </div>
       </div>
     </div>

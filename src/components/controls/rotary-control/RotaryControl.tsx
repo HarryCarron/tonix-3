@@ -19,6 +19,11 @@ const SIZE_PX: Record<RotaryControlSize, number> = {
 
 interface RotaryControlProps {
   size?: RotaryControlSize;
+  // optionally-controlled: pass both to drive the value externally (e.g.
+  // from Amp's envelope state); omit both to let RotaryControl own its
+  // own value internally (e.g. Polysynth's oscillator knobs)
+  value?: number;
+  onChange?: (value: number) => void;
 }
 
 function polarToCartesian(
@@ -66,7 +71,11 @@ function valueToAngle(value: number) {
   return TRACK_START_ANGLE + value * TRACK_SWEEP_ANGLE;
 }
 
-export default function RotaryControl({ size = "sm" }: RotaryControlProps) {
+export default function RotaryControl({
+  size = "sm",
+  value: controlledValue,
+  onChange,
+}: RotaryControlProps) {
   const rotaryControl = useRef<SVGSVGElement | null>(null);
 
   const ddRef = useRef<DragAndDrop | null>(null);
@@ -75,7 +84,17 @@ export default function RotaryControl({ size = "sm" }: RotaryControlProps) {
 
   const sizePx = SIZE_PX[size];
 
-  const [value, setValue] = useState(0.5);
+  const [internalValue, setInternalValue] = useState(0.5);
+
+  const value = controlledValue ?? internalValue;
+
+  // read by the drag handler below, which is registered once on mount and
+  // otherwise wouldn't see updates to `value`/`onChange`
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     const dd = new DragAndDrop().setHost(rotaryControl.current!);
@@ -93,9 +112,16 @@ export default function RotaryControl({ size = "sm" }: RotaryControlProps) {
         const deltaY = lastYRef.current! - clientY;
         lastYRef.current = clientY;
 
-        setValue((v) =>
-          Math.min(1, Math.max(0, v + deltaY / DRAG_PX_PER_FULL_SWEEP)),
+        const next = Math.min(
+          1,
+          Math.max(0, valueRef.current + deltaY / DRAG_PX_PER_FULL_SWEEP),
         );
+
+        if (onChangeRef.current) {
+          onChangeRef.current(next);
+        } else {
+          setInternalValue(next);
+        }
       }
     });
 
