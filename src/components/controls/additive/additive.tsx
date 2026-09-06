@@ -132,15 +132,16 @@ export default function Additive() {
     const totalPartialsNumber = partials.length;
     const width = renderValues.current.totalXTravel / totalPartialsNumber;
     const partialPad = 3;
+    const maxPartialWidth = 2;
     utils.current.canvas!.multiple(
       (ctx: CanvasUtilities, params: RectParams) => {
         const [x, y, w, h, fill] = params;
         ctx.rect(x, y, w, h, fill);
       },
       ...partials.map((partial, i): RectParams => {
-        const x = xPad + width * i + partialPad / 2;
+        const partialWidth = Math.min(width - partialPad, maxPartialWidth);
+        const x = xPad + width * i + (width - partialWidth) / 2;
         const y = renderValues.current.floor;
-        const partialWidth = width - partialPad;
         const height = renderValues.current.totalYTravel * partial * -1;
         return [x, y, partialWidth, height, true];
       }),

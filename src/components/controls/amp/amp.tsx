@@ -75,7 +75,8 @@ function computeStageXPositions(
   const stages = [attack, decay, sustainWidth, release];
 
   return stages.map(
-    (_, i) => xPad + totalXTravel * stages.slice(0, i + 1).reduce((a, b) => a + b),
+    (_, i) =>
+      xPad + totalXTravel * stages.slice(0, i + 1).reduce((a, b) => a + b),
   ) as [number, number, number, number];
 }
 
@@ -484,9 +485,9 @@ export function Amp() {
   };
 
   return (
-    <div className="amp-container shadow-4">
-      <div className="canvas-layer h-100 flex flex-col styled">
-        <div className="flex-1" ref={container}>
+    <div className="h-full w-full shadow-4">
+      <div className="h-full flex flex-col styled">
+        <div className="flex-1 h-full w-full" ref={container}>
           <canvas height="0" width="0" ref={canvas}></canvas>
           <svg
             className="interaction-layer"
@@ -502,7 +503,7 @@ export function Amp() {
           </svg>
         </div>
       </div>
-      <div className="d-flex knob-row space-around w-100">
+      {/* <div className="d-flex knob-row space-around w-100">
         <div className="control-container  envelope-knob flex-1">
           <div className="center-child-xy header-item"> Attack </div>
           <RotaryControl
@@ -547,7 +548,7 @@ export function Amp() {
             }
           />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
