@@ -8,77 +8,18 @@ import {
 } from "react";
 import CanvasUtilities from "@/utils/canvas";
 import "./amp.css";
-import RotaryControl from "@/components/controls/rotary-control/RotaryControl";
-
-interface ClientPosition {
-  clientX: number;
-  clientY: number;
-}
-
-// replaces the legacy GlobalEventHandlers.initiate(onMouseMove): arms
-// window-level mousemove tracking that removes itself after one mouseup
-function trackGlobalMouseMove(onMouseMove: (e: globalThis.MouseEvent) => void) {
-  const stop = () => {
-    window.removeEventListener("mousemove", onMouseMove);
-    window.removeEventListener("mouseup", stop);
-  };
-
-  window.addEventListener("mousemove", onMouseMove);
-  window.addEventListener("mouseup", stop);
-}
+import colors from "tailwindcss/colors";
+import type { ADSR, AmpEnvelope, ClientPosition } from "./types";
+import { computeStageXPositions } from "./stage-positions";
+import { trackGlobalMouseMove } from "./track-global-mouse-move";
+import { AmpInteractionLayer } from "./AmpInteractionLayer";
+import { AdsrStats } from "./AdsrStats";
 
 // matches CanvasUtilities.line's (x1, y1, x2, y2) signature
 type LineParams = [x1: number, y1: number, x2: number, y2: number];
 
 // matches CanvasUtilities.circle's (x, y, r) signature
 type CircleParams = [x: number, y: number, r: number];
-
-interface AmpEnvelope {
-  // todo move to dedicated file
-  attack: number;
-  decay: number;
-  sustain: number;
-  sustainWidth: number;
-  release: number;
-}
-
-interface AmpCurve {
-  // todo move to dedicated file
-  attackCurve: number;
-  decayCurve: number;
-  releaseCurve: number;
-}
-
-interface Handle {
-  x: number;
-  y: number;
-}
-
-interface InteractionPanel {
-  x: number;
-  width: number;
-  handle: Handle;
-}
-
-type ADSR = AmpEnvelope & AmpCurve;
-
-// cumulative X position where each stage ends, shared by the canvas draw
-// (drawAmp) and the SVG interaction layer (get) so they can't drift apart
-function computeStageXPositions(
-  attack: number,
-  decay: number,
-  sustainWidth: number,
-  release: number,
-  xPad: number,
-  totalXTravel: number,
-): [number, number, number, number] {
-  const stages = [attack, decay, sustainWidth, release];
-
-  return stages.map(
-    (_, i) =>
-      xPad + totalXTravel * stages.slice(0, i + 1).reduce((a, b) => a + b),
-  ) as [number, number, number, number];
-}
 
 export function Amp() {
   const xPad = 10;
@@ -156,29 +97,29 @@ export function Amp() {
       .setStyleProfiles({
         ampGuide: {
           lineWidth: 1,
-          strokeColor: "grey",
+          strokeColor: colors.stone[400],
           lineDash: [2, 3],
         },
         ampLine: {
           lineWidth: 2,
-          strokeColor: "#E0E0E0",
+          strokeColor: colors.stone[500],
           lineDash: [0],
         },
-        ampLineFill: { fillColor: "grey", opacity: 0.4 },
+        ampLineFill: { fillColor: colors.stone[300], opacity: 0.4 },
         ampHandle: {
           lineWidth: 2,
-          strokeColor: "#E0E0E0",
-          fillColor: "#E0E0E08",
+          strokeColor: colors.stone[500],
+          fillColor: colors.stone[500],
           lineDash: [],
         },
         baseLine: {
           lineWidth: 1,
-          strokeColor: "grey",
+          strokeColor: colors.stone[400],
           lineDash: [0],
         },
         valueGuideLine: {
-          lineWidth: 1,
-          strokeColor: "grey",
+          lineWidth: 0.5,
+          strokeColor: colors.stone[600],
           lineDash: [2, 3],
         },
         valueText: { fillStyle: "#C3C3CE" },
@@ -485,84 +426,23 @@ export function Amp() {
   };
 
   return (
-    <div className="h-full w-full shadow-4">
-      <div className="h-full flex flex-col styled">
-        <div className="flex-1 h-full w-full" ref={container}>
+    <div className="h-full w-full shadow-4 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col styled">
+        <div className="flex-1 w-full relative" ref={container}>
           <canvas height="0" width="0" ref={canvas}></canvas>
-          <svg
-            className="interaction-layer"
-            height={dims?.height ?? 0}
+          <AmpInteractionLayer
             width={dims?.width ?? 0}
-          >
-            {[0, 1, 2, 3].map((i) =>
-              interactionPanel(get(i), i, () => ampClicked(i)),
-            )}
-            {[0, 1, 2, 3].map((i) =>
-              interactionHandle(get(i), i, (e) => onHandleDrag(e, i)),
-            )}
-          </svg>
+            height={dims?.height ?? 0}
+            get={get}
+            onStageClick={ampClicked}
+            onHandleDrag={onHandleDrag}
+          />
         </div>
       </div>
-      {/* <div className="d-flex knob-row space-around w-100">
-        <div className="control-container  envelope-knob flex-1">
-          <div className="center-child-xy header-item"> Attack </div>
-          <RotaryControl
-            size="sm"
-            value={amp.attack}
-            onChange={(attack) =>
-              setAmp((state) =>
-                widthValid({ ...state, attack }) ? { ...state, attack } : state,
-              )
-            }
-          />
-        </div>
-        <div className="control-container envelope-knob flex-1">
-          <div className="center-child-xy header-item"> Decay </div>
-          <RotaryControl
-            size="sm"
-            value={amp.decay}
-            onChange={(decay) =>
-              setAmp((state) =>
-                widthValid({ ...state, decay }) ? { ...state, decay } : state,
-              )
-            }
-          />
-        </div>
-        <div className="control-container  envelope-knob flex-1">
-          <div className="center-child-xy header-item"> Sustain </div>
-          <RotaryControl
-            size="sm"
-            value={amp.sustain}
-            onChange={(sustain) => setAmp((state) => ({ ...state, sustain }))}
-          />
-        </div>
-        <div className="control-container  envelope-knob flex-1">
-          <div className="center-child-xy header-item"> Release </div>
-          <RotaryControl
-            size="sm"
-            value={amp.release}
-            onChange={(release) =>
-              setAmp((state) =>
-                widthValid({ ...state, release }) ? { ...state, release } : state,
-              )
-            }
-          />
-        </div>
-      </div> */}
+
+      <AdsrStats amp={amp} />
     </div>
   );
 }
-
-const interactionPanel = (
-  { x, width }: InteractionPanel,
-  i: number,
-  onAmpClick: (e: MouseEvent<SVGRectElement>) => void,
-) => <rect key={i} onClick={onAmpClick} x={x} width={width} y="0" />;
-
-const interactionHandle = (
-  { handle: { x, y } }: InteractionPanel,
-  i: number,
-  onHandleDrag: (e: MouseEvent<SVGCircleElement>) => void,
-) => <circle key={i} onMouseDown={onHandleDrag} cx={x} cy={y} r="5" />;
 
 export default Amp;

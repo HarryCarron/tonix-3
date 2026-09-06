@@ -9,7 +9,7 @@ import type { OscWave } from "./oscWave";
 const OSCILLATOR_IDS = ["osc1", "osc2", "osc3"];
 
 export function Polysynth() {
-  const [detailsView, setDetailsView] = useState<OscDetailsView>("additive");
+  const [detailsView, setDetailsView] = useState<OscDetailsView>("envelope");
   const [oscWaves, setOscWaves] = useState<OscWave[]>(
     OSCILLATOR_IDS.map(() => "sine"),
   );

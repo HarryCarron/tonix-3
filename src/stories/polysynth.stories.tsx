@@ -6,6 +6,7 @@ const meta = {
   title: "Polysynth",
   tags: ["autodocs"],
   parameters: {
+    layout: "centered",
     docs: {
       description: {
         component:
