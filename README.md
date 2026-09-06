@@ -1,6 +1,8 @@
 # tonix-3
 
-[![Storybook on Vercel](https://deploy-badge.vercel.app/?app=tonix-3)](https://tonix-3.vercel.app/)
+[![Storybook on Vercel](https://deploy-badge.vercel.app/?app=tonix-3)](https://storybook.tonix.studio/)
+
+Live Storybook: [storybook.tonix.studio](https://storybook.tonix.studio/)
 
 A node-based synth/audio patch editor: a large pannable, zoomable canvas ("world") on which you place instrument and control nodes (keyboard, polysynth, etc.) and wire them up, similar in spirit to tools like Max/MSP or Pure Data but built for the web.
 
