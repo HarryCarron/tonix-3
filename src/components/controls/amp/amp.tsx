@@ -11,7 +11,7 @@ import "./amp.css";
 import colors from "tailwindcss/colors";
 import type { ADSR, AmpEnvelope, ClientPosition } from "./types";
 import { computeStageXPositions } from "./stage-positions";
-import { trackGlobalMouseMove } from "./track-global-mouse-move";
+import { trackGlobalMouseMove } from "@/utils/track-global-mouse-move";
 import { AmpInteractionLayer } from "./AmpInteractionLayer";
 import { AdsrStats } from "./AdsrStats";
 
@@ -25,9 +25,6 @@ export function Amp() {
   const xPad = 10;
   const yPad = 10;
 
-  // drives the interaction SVG's width/height in the JSX below; the other
-  // measured values (floor, totalXTravel, sustainHeight, etc.) are only
-  // read inside drawAmp's canvas math, so they stay in the ampValues ref
   const [dims, setDims] = useState<{ width: number; height: number } | null>(
     null,
   );
@@ -427,17 +424,21 @@ export function Amp() {
 
   return (
     <div className="h-full w-full shadow-4 flex flex-col">
-      <div className="flex-1 min-h-0 flex flex-col styled">
-        <div className="flex-1 w-full relative" ref={container}>
-          <canvas height="0" width="0" ref={canvas}></canvas>
-          <AmpInteractionLayer
-            width={dims?.width ?? 0}
-            height={dims?.height ?? 0}
-            get={get}
-            onStageClick={ampClicked}
-            onHandleDrag={onHandleDrag}
-          />
-        </div>
+      <div className="flex-1 w-full relative" ref={container}>
+        <canvas
+          height="0"
+          width="0"
+          className="absolute top-0 left-0"
+          ref={canvas}
+        ></canvas>
+
+        <AmpInteractionLayer
+          width={dims?.width ?? 0}
+          height={dims?.height ?? 0}
+          get={get}
+          onStageClick={ampClicked}
+          onHandleDrag={onHandleDrag}
+        />
       </div>
 
       <AdsrStats amp={amp} />

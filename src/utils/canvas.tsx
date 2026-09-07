@@ -5,6 +5,7 @@ interface CanvasStyle {
   lineWidth?: number;
   fillColor?: string;
   lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
   lineDash?: number[];
   font?: string;
   textAlign?: CanvasTextAlign;
@@ -134,6 +135,9 @@ export default class CanvasUtilities {
           break;
         case "lineCap":
           this.ctx.lineCap = value as CanvasLineCap;
+          break;
+        case "lineJoin":
+          this.ctx.lineJoin = value as CanvasLineJoin;
           break;
         case "lineDash":
           this.ctx.setLineDash(value as number[]);

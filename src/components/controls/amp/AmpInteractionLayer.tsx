@@ -19,11 +19,12 @@ export function AmpInteractionLayer({
   onHandleDrag,
 }: AmpInteractionLayerProps) {
   return (
-    <svg className="interaction-layer" height={height} width={width}>
+    <svg className="interaction-layer absolute top-0 left-0" height={height} width={width}>
       {STAGE_IDS.map((id) => (
         <InteractionRect
           key={id}
           stage={get(id)}
+          height={height}
           onClick={() => onStageClick(id)}
         />
       ))}
@@ -40,12 +41,25 @@ export function AmpInteractionLayer({
 
 function InteractionRect({
   stage: { x, width },
+  height,
   onClick,
 }: {
   stage: StageInteraction;
+  height: number;
   onClick: (e: MouseEvent<SVGRectElement>) => void;
 }) {
-  return <rect onClick={onClick} x={x} width={width} y="0" />;
+  return (
+    <rect
+      onClick={onClick}
+      x={x}
+      width={width}
+      y="0"
+      height={height}
+      fill="transparent"
+      stroke="none"
+      className="cursor-pointer"
+    />
+  );
 }
 
 function InteractionHandle({
@@ -57,5 +71,15 @@ function InteractionHandle({
   stage: StageInteraction;
   onDrag: (e: MouseEvent<SVGCircleElement>) => void;
 }) {
-  return <circle onMouseDown={onDrag} cx={x} cy={y} r="5" />;
+  return (
+    <circle
+      onMouseDown={onDrag}
+      cx={x}
+      cy={y}
+      r="5"
+      fill="transparent"
+      stroke="none"
+      className="cursor-grab active:cursor-grabbing"
+    />
+  );
 }

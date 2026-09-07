@@ -1,0 +1,19 @@
+.filter .interaction-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.filter .interaction-layer rect {
+  fill-opacity: 0;
+  cursor: pointer;
+}
+
+.filter .interaction-layer circle {
+  fill-opacity: 0;
+  cursor: grab;
+}
+
+.filter .interaction-layer circle:active {
+  cursor: grabbing;
+}

@@ -44,7 +44,7 @@ export function OscDetails({ view, onViewChange }: OscDetailsProps) {
         </Select>
       </div>
 
-      <div className="h-[130px] w-full d-flex bg-stone-100 border-t border-stone-300">
+      <div className="h-[100px] w-full d-flex bg-stone-100 border-t border-stone-300">
         {view === "wave" && <Waveform />}
         {view === "envelope" && <Amp />}
         {view === "additive" && <Additive />}
