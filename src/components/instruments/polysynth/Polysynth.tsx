@@ -5,6 +5,7 @@ import { Oscillator } from "./Oscillator";
 import { OscDetails } from "./OscDetails";
 import type { OscDetailsView } from "./oscDetailsView";
 import type { OscWave } from "./oscWave";
+import { FaArrowLeft } from "react-icons/fa";
 
 const OSCILLATOR_IDS = ["osc1", "osc2", "osc3"];
 
@@ -43,6 +44,16 @@ export function Polysynth() {
               }
             />
           ))}
+
+          <div className="w-full py-3 border-b border-stone-200 pix-font flex align-center justify-center items-center gap-2 text-stone-700">
+            <span>
+              <FaArrowLeft />
+            </span>
+            <span>MASTER</span>
+            <span>
+              <FaArrowLeft />
+            </span>
+          </div>
         </div>
         <OscDetails view={detailsView} onViewChange={setDetailsView} />
       </CardContent>

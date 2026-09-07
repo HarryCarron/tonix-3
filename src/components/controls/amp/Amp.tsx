@@ -21,6 +21,11 @@ type LineParams = [x1: number, y1: number, x2: number, y2: number];
 // matches CanvasUtilities.circle's (x, y, r) signature
 type CircleParams = [x: number, y: number, r: number];
 
+// sustain is a held level, not a timed stage like attack/decay/release - its
+// "width" only exists to give its handle a draggable target, so it's capped
+// small rather than being able to eat the same timeline space as real stages
+const MAX_SUSTAIN_WIDTH = 0.05;
+
 export function Amp() {
   const xPad = 10;
   const yPad = 10;
@@ -35,7 +40,7 @@ export function Amp() {
     decay: 0.2,
     decayCurve: 0,
     sustain: 0.5,
-    sustainWidth: 0.2,
+    sustainWidth: MAX_SUSTAIN_WIDTH,
     release: 0.3,
     releaseCurve: 0,
   });
@@ -98,15 +103,15 @@ export function Amp() {
           lineDash: [2, 3],
         },
         ampLine: {
-          lineWidth: 2,
-          strokeColor: colors.stone[500],
+          lineWidth: 1.5,
+          strokeColor: colors.stone[700],
           lineDash: [0],
         },
         ampLineFill: { fillColor: colors.stone[300], opacity: 0.4 },
         ampHandle: {
           lineWidth: 2,
-          strokeColor: colors.stone[500],
-          fillColor: colors.stone[500],
+          strokeColor: colors.stone[800],
+          fillColor: colors.stone[800],
           lineDash: [],
         },
         baseLine: {
@@ -321,12 +326,18 @@ export function Amp() {
         break;
       }
       case 2: {
-        const sustainWidth = validateValue(x - (amp.attack + amp.decay));
+        // sustain's right handle no longer grows sustainWidth itself (fixed
+        // at MAX_SUSTAIN_WIDTH) - dragging it instead stretches decay, so
+        // the handle keeps following the cursor with the plateau's width
+        // staying constant
+        const decay = validateValue(x - amp.attack - MAX_SUSTAIN_WIDTH);
         const sustain = validateValue(y);
 
         setAmp((state) => {
-          if (widthValid({ ...state, sustainWidth })) {
-            return { ...state, sustainWidth };
+          if (
+            widthValid({ ...state, decay, sustainWidth: MAX_SUSTAIN_WIDTH })
+          ) {
+            return { ...state, decay, sustainWidth: MAX_SUSTAIN_WIDTH };
           }
           return state;
         });

@@ -1,5 +1,6 @@
 import type { ADSR } from "./types";
 import { getCurve } from "./curve";
+import "./AdsrStats.css";
 
 interface AdsrStatsProps {
   amp: ADSR;
@@ -14,11 +15,11 @@ export function AdsrStats({ amp }: AdsrStatsProps) {
   ];
 
   return (
-    <div className="h-[20px] shrink-0 flex justify-around">
+    <div className="h-[15px] shrink-0 flex justify-around bg-stone-300 border-t border-stone-400">
       {stages.map(({ label, value, curve }) => (
         <span
           key={label}
-          className="inline-flex items-center bg-stone-300 text-stone-700 rounded-md px-2 leading-none font-bold"
+          className="stat-val inline-flex items-center font-xs text-stone-800 leading-none"
         >
           <span className="mr-2">{Math.round(value * 100)}%</span>
           <span>{getCurve(curve)}</span>
