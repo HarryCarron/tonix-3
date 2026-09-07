@@ -3,6 +3,7 @@ import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
 import { Polysynth } from "@/components/instruments/polysynth/Polysynth";
 import Keyboard from "@/components/nodes/keyboard/Keyboard";
+import { MidiBox } from "@/components/nodes/midi-box/MidiBox";
 
 export function World() {
   return (
@@ -22,6 +23,12 @@ export function World() {
       <span className="absolute" style={{ left: "800px", top: "400px" }}>
         <NodeWrapper>
           <Keyboard />
+        </NodeWrapper>
+      </span>
+
+      <span className="absolute" style={{ left: "550px", top: "150px" }}>
+        <NodeWrapper>
+          <MidiBox />
         </NodeWrapper>
       </span>
       <Background />
