@@ -18,6 +18,7 @@ const INITIAL_NODES: WorldNode[] = [
   { id: "keyboard-1", type: "keyboard", position: { left: 800, top: 400 } },
   { id: "midiBox-1", type: "midiBox", position: { left: 550, top: 150 } },
   { id: "filter-1", type: "filter", position: { left: 300, top: 650 } },
+  { id: "delay-1", type: "delay", position: { left: 900, top: 750 } },
 ];
 
 export function World() {

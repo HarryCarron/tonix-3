@@ -3,6 +3,7 @@ import Keyboard from "../components/nodes/keyboard/Keyboard";
 import { Polysynth } from "../components/instruments/polysynth/Polysynth";
 import { MidiBox } from "../components/nodes/midi-box/MidiBox";
 import { Filter } from "../components/effects/filter/Filter";
+import { Delay } from "../components/effects/delay/Delay";
 
 export type INodeMap = Record<string, ComponentType>;
 
@@ -11,4 +12,5 @@ export const NodeMap: INodeMap = {
   polysynth: Polysynth,
   midiBox: MidiBox,
   filter: Filter,
+  delay: Delay,
 };
