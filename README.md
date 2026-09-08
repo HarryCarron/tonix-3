@@ -1,5 +1,6 @@
 # tonix-3
 
+[![CI](https://github.com/HarryCarron/tonix-3/actions/workflows/ci.yml/badge.svg)](https://github.com/HarryCarron/tonix-3/actions/workflows/ci.yml)
 [![Storybook on Vercel](https://deploy-badge.vercel.app/?app=tonix-3)](https://storybook.tonix.studio/)
 
 Live Storybook: [storybook.tonix.studio](https://storybook.tonix.studio/)
