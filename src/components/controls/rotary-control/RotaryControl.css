@@ -1,6 +1,11 @@
 .rotating-component {
   transform-box: fill-box;
   transform-origin: center;
+  transition: transform 120ms ease-out;
+}
+
+.value-arc {
+  transition: stroke-dashoffset 120ms ease-out;
 }
 
 .knob-input-container {
