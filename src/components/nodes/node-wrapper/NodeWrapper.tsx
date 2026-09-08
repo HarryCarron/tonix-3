@@ -5,37 +5,45 @@ import { Button } from "@/components/ui/button";
 import { HiOutlineVolumeOff } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
 import type { ReactNode } from "react";
+import { Terminal } from "./Terminal";
 
 interface NodeWrapperProps {
+  id: string;
   children: ReactNode;
 }
 
-export function NodeWrapper({ children }: NodeWrapperProps) {
+export function NodeWrapper({ id, children }: NodeWrapperProps) {
   return (
-    <div className="node-wrapper inline-flex flex-col">
-      <div className="title-container h-12 w-full flex">
-        <div className="grow flex items-center">
-          <Input value="Keyboard 1" />
+    <div className="inline-flex items-center gap-1">
+      <Terminal nodeId={id} side="input" />
+
+      <div className="node-wrapper inline-flex flex-col">
+        <div className="title-container h-12 w-full flex">
+          <div className="grow flex items-center">
+            <Input value="Keyboard 1" />
+          </div>
+          <span className="flex gap-[2px]">
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiOutlineVolumeOff />
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiAdjustments />
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiOutlineX />
+              </Button>
+            </div>
+          </span>
         </div>
-        <span className="flex gap-[2px]">
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiOutlineVolumeOff />
-            </Button>
-          </div>
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiAdjustments />
-            </Button>
-          </div>
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiOutlineX />
-            </Button>
-          </div>
-        </span>
+        <div className="node-container">{children}</div>
       </div>
-      <div className="node-container">{children}</div>
+
+      <Terminal nodeId={id} side="output" />
     </div>
   );
 }
