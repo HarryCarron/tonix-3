@@ -25,6 +25,7 @@ export function Workspace() {
 
   useEffect(() => {
     patientLoad.setSource("camera", transformRef.current);
+    patientLoad.setSource("viewportHost", hostRef.current);
   }, []);
 
   useEffect(() => {
