@@ -18,6 +18,10 @@ npm run build-storybook    # static Storybook build
 ```
 There is no test runner wired up yet.
 
+## Code style
+
+Default to no comments. Only add one when it captures something critical that isn't obvious from the code itself — a non-obvious invariant, a workaround for a specific bug, a hidden constraint, or a gotcha that would otherwise cause a regression. Never write comments that just restate what the code does; well-named identifiers already cover that.
+
 ## Architecture (root project)
 
 The app is a node-based editor for building synth/audio patches on a large pannable/zoomable canvas ("world").

@@ -7,8 +7,7 @@ import { Input } from "../../ui/input";
 const TRACK_START_ANGLE = 210;
 const TRACK_SWEEP_ANGLE = 300;
 
-// pixels of vertical drag needed to sweep the value from 0 to 1 (continuous
-// mode) or from the first to the last stage (staged mode)
+// pixels of vertical drag to sweep 0-1 (continuous) or first-to-last stage (staged)
 const DRAG_PX_PER_FULL_SWEEP = 100;
 
 export type RotaryControlSize = "sm" | "md";
@@ -19,11 +18,8 @@ const SIZE_PX: Record<RotaryControlSize, number> = {
 };
 
 export interface RotaryControlStage {
-  // passed straight to onChange/stored internally - e.g. a Tone.js Time
-  // notation string like "8n"
-  value: string;
-  // shown in the value readout when this stage is selected - e.g. "1/8"
-  label: string;
+  value: string; // e.g. a Tone.js Time notation string like "8n"
+  label: string; // e.g. "1/8"
 }
 
 interface RotaryControlContinuousProps {
@@ -39,7 +35,6 @@ interface RotaryControlContinuousProps {
 interface RotaryControlStagedProps {
   mode: "staged";
   size?: RotaryControlSize;
-  // discrete positions the knob can snap to, in order around the track
   stages: RotaryControlStage[];
   value?: string;
   onChange?: (value: string) => void;
@@ -92,8 +87,6 @@ function valueToAngle(value: number) {
   return TRACK_START_ANGLE + value * TRACK_SWEEP_ANGLE;
 }
 
-// evenly spaces `count` stages across the track, first at TRACK_START_ANGLE,
-// last at TRACK_START_ANGLE + TRACK_SWEEP_ANGLE
 function stageAngle(index: number, count: number) {
   if (count <= 1) return TRACK_START_ANGLE;
   return TRACK_START_ANGLE + (index / (count - 1)) * TRACK_SWEEP_ANGLE;
@@ -110,8 +103,7 @@ export default function RotaryControl(props: RotaryControlProps) {
 
   const lastYRef = useRef<number | null>(null);
 
-  // continuous 0-1 drag position, shared by both modes: it *is* the value
-  // in continuous mode, and gets quantized to a stage index in staged mode
+  // the value in continuous mode; quantized to a stage index in staged mode
   const rawRef = useRef(0.5);
 
   const lastStageIndexRef = useRef(0);
@@ -139,8 +131,7 @@ export default function RotaryControl(props: RotaryControlProps) {
         )
       : 0;
 
-  // read by the drag handler below, which is registered once on mount and
-  // otherwise wouldn't see updates to props/state
+  // refs so the drag handler (registered once on mount) sees prop/state updates
   const modeRef = useRef(props.mode ?? "continuous");
   modeRef.current = props.mode ?? "continuous";
 
@@ -172,9 +163,7 @@ export default function RotaryControl(props: RotaryControlProps) {
       if (type === "start") {
         lastYRef.current = clientY;
 
-        // seed the continuous drag position from wherever we currently
-        // are, so a staged drag starts at the current stage rather than
-        // jumping to wherever a stale rawRef last left off
+        // reseed from the current stage so the drag doesn't jump from a stale rawRef
         const stagesNow = stagesRef.current;
         rawRef.current =
           modeRef.current === "staged" && stagesNow && stagesNow.length > 1
