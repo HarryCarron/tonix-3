@@ -19,7 +19,7 @@ interface OscDetailsProps {
 
 export function OscDetails({ view, onViewChange }: OscDetailsProps) {
   return (
-    <div className="mt-3 border-stone-300 border rounded-lg overflow-hidden">
+    <div className="mt-3 border-stone-200 border rounded-lg overflow-hidden">
       <div className="flex p-2">
         <Select
           value={view}
