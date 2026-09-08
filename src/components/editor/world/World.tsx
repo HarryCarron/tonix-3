@@ -1,10 +1,22 @@
 import { ENV } from "@/env";
 import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
-import { Polysynth } from "@/components/instruments/polysynth/Polysynth";
-import Keyboard from "@/components/nodes/keyboard/Keyboard";
-import { MidiBox } from "@/components/nodes/midi-box/MidiBox";
-import { Filter } from "@/components/effects/filter/Filter";
+import { NodeMap } from "@/utils/node-map";
+
+interface WorldNode {
+  id: string;
+  type: keyof typeof NodeMap;
+  position: { left: number; top: number };
+}
+
+// initial node layout, replacing what used to be hardcoded JSX per node;
+// positions preserved from that previous layout
+const INITIAL_NODES: WorldNode[] = [
+  { id: "polysynth-1", type: "polysynth", position: { left: 300, top: 300 } },
+  { id: "keyboard-1", type: "keyboard", position: { left: 800, top: 400 } },
+  { id: "midiBox-1", type: "midiBox", position: { left: 550, top: 150 } },
+  { id: "filter-1", type: "filter", position: { left: 300, top: 650 } },
+];
 
 export function World() {
   return (
@@ -15,29 +27,21 @@ export function World() {
         width: ENV.worldDims + "px",
       }}
     >
-      <span className="absolute" style={{ left: "300px", top: "300px" }}>
-        <NodeWrapper>
-          <Polysynth />
-        </NodeWrapper>
-      </span>
+      {INITIAL_NODES.map(({ id, type, position }) => {
+        const NodeComponent = NodeMap[type];
 
-      <span className="absolute" style={{ left: "800px", top: "400px" }}>
-        <NodeWrapper>
-          <Keyboard />
-        </NodeWrapper>
-      </span>
-
-      <span className="absolute" style={{ left: "550px", top: "150px" }}>
-        <NodeWrapper>
-          <MidiBox />
-        </NodeWrapper>
-      </span>
-
-      <span className="absolute" style={{ left: "300px", top: "650px" }}>
-        <NodeWrapper>
-          <Filter />
-        </NodeWrapper>
-      </span>
+        return (
+          <span
+            key={id}
+            className="absolute"
+            style={{ left: position.left + "px", top: position.top + "px" }}
+          >
+            <NodeWrapper>
+              <NodeComponent />
+            </NodeWrapper>
+          </span>
+        );
+      })}
       <Background />
     </div>
   );
