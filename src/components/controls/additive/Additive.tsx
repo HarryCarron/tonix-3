@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./additive.css";
+import "./Additive.css";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import { DragAndDrop } from "@/utils/drag-and-drop";
 import CanvasUtilities from "@/utils/canvas";
 import { Button } from "@/components/ui/button";
 
 const PARTIALS_UPPER_LIMIT = 32;
-const TOOL_BAR_HEIGHT = 25;
 
 interface Utilities {
   canvas: CanvasUtilities | undefined;

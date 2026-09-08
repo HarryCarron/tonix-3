@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import Additive from "@/components/controls/additive/additive";
+import Additive from "@/components/controls/additive/Additive";
 
 const meta = {
   component: Additive,

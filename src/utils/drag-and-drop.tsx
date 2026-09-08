@@ -11,7 +11,7 @@ export interface Position {
  */
 export interface DragAndDropPayload {
   type: "start" | "dragging" | "done";
-  e: Event;
+  e: MouseEvent;
 }
 
 type DragAndDropHandler = (v: DragAndDropPayload) => void;
@@ -45,7 +45,7 @@ export class DragAndDrop {
     return this;
   }
 
-  private __mouseDown(e: Event): void {
+  private __mouseDown(e: MouseEvent): void {
     this._handler!({
       type: "start",
       e,
@@ -57,21 +57,26 @@ export class DragAndDrop {
     document.addEventListener("mouseup", this._mouseUp);
   }
 
-  private __mouseMove(e: Event): void {
+  private __mouseMove(e: MouseEvent): void {
     this._handler!({
       type: "dragging",
       e,
     });
   }
 
-  private __mouseUp(e?: Event): void {
+  private __mouseUp(e?: MouseEvent): void {
     if (e) {
       this._handler!({
         type: "done",
         e,
       });
     } else {
-      this._host!.removeEventListener("mousedown", this._mouseDown);
+      // cast needed: TS can't resolve the specific "mousedown" listener
+      // overload against a union element type (HTMLElement | SVGSVGElement)
+      (this._host as HTMLElement).removeEventListener(
+        "mousedown",
+        this._mouseDown,
+      );
     }
 
     document.removeEventListener("mousemove", this._mouseMove);
@@ -86,6 +91,11 @@ export class DragAndDrop {
   /** Starts listening for drags on the host, invoking `handler` at each stage. */
   listen(handler: DragAndDropHandler): void {
     this._handler = handler;
-    this._host!.addEventListener("mousedown", this._mouseDown);
+    // cast needed: TS can't resolve the specific "mousedown" listener
+    // overload against a union element type (HTMLElement | SVGSVGElement)
+    (this._host as HTMLElement).addEventListener(
+      "mousedown",
+      this._mouseDown,
+    );
   }
 }

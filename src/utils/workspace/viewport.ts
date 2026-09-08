@@ -4,7 +4,7 @@
  * @param contentY - y position in content coordinates
  * @param state - react-zoom-pan-pinch state
  */
-function contentToViewport(
+export function contentToViewport(
   contentX: number,
   contentY: number,
   state: { scale: number; positionX: number; positionY: number }
@@ -19,7 +19,7 @@ function contentToViewport(
 /**
  * Convert a point from viewport-space back to content-space
  */
-function viewportToContent(
+export function viewportToContent(
   viewportX: number,
   viewportY: number,
   state: { scale: number; positionX: number; positionY: number }

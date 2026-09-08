@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./StaticEtidableInput.css";
+import "./StaticEditableInput.css";
 
 export interface StaticEditableInputProps {
     value: string;
