@@ -7,7 +7,7 @@ import {
   type MouseEvent,
 } from "react";
 import CanvasUtilities from "@/utils/canvas";
-import "./amp.css";
+import "./Amp.css";
 import colors from "tailwindcss/colors";
 import type { ADSR, AmpEnvelope, ClientPosition } from "./types";
 import { computeStageXPositions } from "./stage-positions";

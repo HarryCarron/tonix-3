@@ -7,11 +7,8 @@ import {
   type ReactZoomPanPinchContentRef,
 } from "react-zoom-pan-pinch";
 import Tools from "../tools/Tools";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  BoundingBoxTool,
-  type Rect,
-} from "@/utils/workspace/bounding-box-tool";
+import { useEffect, useRef, useState } from "react";
+import { BoundingBoxTool } from "@/utils/workspace/bounding-box-tool";
 import Navigator from "../navigator/Navigator";
 import { patientLoad } from "@/utils/workspace/patient-load";
 
@@ -35,7 +32,9 @@ export function Workspace() {
     const host = hostRef.current!;
 
     if (editorTool === EditorTool.mag) {
-      bbox.setHost(host).listen((rect: Rect) => {});
+      // listener intentionally not implemented yet — tracked as part of the
+      // mouse-anchored-zoom refactor (see CLAUDE.md's Coordinate model note)
+      bbox.setHost(host).listen(() => {});
     }
 
     return () => {

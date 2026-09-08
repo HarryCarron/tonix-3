@@ -2,7 +2,6 @@ import { ENV } from "@/env";
 
 export class NavigatorController {
   private _world?: HTMLDivElement;
-  private _camera?: HTMLDivElement;
   private _host?: HTMLDivElement;
   private _scaleVal?: number;
 
@@ -13,11 +12,6 @@ export class NavigatorController {
 
   setWorldElement(elem: HTMLDivElement): this {
     this._world = elem;
-    return this;
-  }
-
-  setCameraElement(elem: HTMLDivElement): this {
-    this._camera = elem;
     return this;
   }
 

@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 class PatientLoad {
-  sources: Record<string, any> = {};
-
   private readonly _sources = new Map<string, any>();
 
   private readonly _awaiting = new Map<string, (s: any) => void>();
 
   setSource<T>(id: string, source: T) {
-    this.sources[id] = source;
+    this._sources.set(id, source);
 
     this._checkAwaiting(id);
   }
@@ -26,7 +24,7 @@ class PatientLoad {
     const getter = this._awaiting.get(id);
 
     if (getter) {
-      const source = this.sources.get(id);
+      const source = this._sources.get(id);
       getter(source);
       this._awaiting.delete(id);
     }

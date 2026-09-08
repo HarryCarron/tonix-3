@@ -26,7 +26,6 @@ export default function Navigator({ host }: NavigatorProps) {
       ?.setScaleVal(scaleVal)
       .setHostElement(host)
       .setWorldElement(world!)
-      .setCameraElement(camera!)
       .init();
   }, [worldRef, cameraRef, host]);
 

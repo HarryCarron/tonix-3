@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import "./Keyboard.css";
 
 import {
@@ -27,7 +27,6 @@ export default function Keyboard() {
   const keysNum = 7 * 4;
   const naturalKeyWidth = containerDims.width / keysNum;
 
-  let currentOctave = 0;
   let currentKey = -1;
 
   useEffect(() => {
@@ -52,9 +51,10 @@ export default function Keyboard() {
                 width={containerDims.width}
                 height={containerDims.height}
               >
-                {Array.from({ length: keysNum }).map((key, keyId) => {
+                {Array.from({ length: keysNum }).map((_, keyId) => {
                   return (
                     <rect
+                      key={keyId}
                       className="natural-key cursor-pointer"
                       width={naturalKeyWidth}
                       x={naturalKeyWidth * keyId}
@@ -64,14 +64,13 @@ export default function Keyboard() {
                     ></rect>
                   );
                 })}
-                {Array.from({ length: keysNum }).map((key, keyId) => {
+                {Array.from({ length: keysNum }).map((_, keyId) => {
                   currentKey++;
                   if (currentKey === 7) {
                     currentKey = 0;
-                    currentOctave++;
                   }
                   return (
-                    <>
+                    <Fragment key={keyId}>
                       {[0, 1, 3, 4, 5].includes(currentKey) && (
                         <rect
                           className="minor-key fill-stone-700 cursor-pointer"
@@ -82,7 +81,7 @@ export default function Keyboard() {
                           rx="1"
                         ></rect>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </svg>

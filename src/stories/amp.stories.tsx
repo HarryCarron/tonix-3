@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import Amp from "@/components/controls/amp/amp";
+import Amp from "@/components/controls/amp/Amp";
 
 const meta = {
   component: Amp,

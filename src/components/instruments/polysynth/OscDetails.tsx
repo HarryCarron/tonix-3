@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/select";
 import { PiWaveSquare, PiWaveSawtooth, PiWaveSine } from "react-icons/pi";
 import { Waveform } from "@/components/controls/waveform/Waveform";
-import Additive from "@/components/controls/additive/additive";
-import Amp from "@/components/controls/amp/amp";
+import Additive from "@/components/controls/additive/Additive";
+import Amp from "@/components/controls/amp/Amp";
 import type { OscDetailsView } from "./oscDetailsView";
 
 interface OscDetailsProps {
