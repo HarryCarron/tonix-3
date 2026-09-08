@@ -40,7 +40,9 @@ interface RotaryControlStagedProps {
   onChange?: (value: string) => void;
 }
 
-type RotaryControlProps = RotaryControlContinuousProps | RotaryControlStagedProps;
+type RotaryControlProps =
+  | RotaryControlContinuousProps
+  | RotaryControlStagedProps;
 
 function polarToCartesian(
   centerX: number,
@@ -223,6 +225,8 @@ export default function RotaryControl(props: RotaryControlProps) {
       ? stageAngle(stageIndex, stages.length)
       : valueToAngle(continuousValue);
 
+  const progress = (valueAngle - TRACK_START_ANGLE) / TRACK_SWEEP_ANGLE;
+
   const readoutText = isStaged
     ? (stages?.[stageIndex]?.label ?? "")
     : (continuousValue * 100).toFixed(0);
@@ -242,41 +246,13 @@ export default function RotaryControl(props: RotaryControlProps) {
           width={sizePx}
           ref={rotaryControl}
         >
-          <path
-            fill="none"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="stroke-stone-300"
-            d={describeArc(
-              sizePx / 2,
-              sizePx / 2,
-              sizePx / 2,
-              TRACK_START_ANGLE,
-              TRACK_START_ANGLE + TRACK_SWEEP_ANGLE,
-            )}
-          />
-
-          <path
-            fill="none"
-            className="stroke-stone-800"
-            strokeWidth="2"
-            strokeLinecap="round"
-            d={describeArc(
-              sizePx / 2,
-              sizePx / 2,
-              sizePx / 2,
-              TRACK_START_ANGLE,
-              valueAngle,
-            )}
-          />
-
           {isStaged &&
             stages?.map((stage, i) => {
               const angle = stageAngle(i, stages.length);
               const inner = polarToCartesian(
                 sizePx / 2,
                 sizePx / 2,
-                sizePx / 2 - 2,
+                sizePx / 2,
                 angle,
               );
               const outer = polarToCartesian(
@@ -294,11 +270,42 @@ export default function RotaryControl(props: RotaryControlProps) {
                   y1={inner.y}
                   x2={outer.x}
                   y2={outer.y}
-                  strokeWidth={active ? 2 : 1}
-                  className={active ? "stroke-stone-800" : "stroke-stone-400"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className={active ? "stroke-stone-800" : "stroke-stone-300"}
                 />
               );
             })}
+          <path
+            fill="none"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="stroke-stone-300"
+            d={describeArc(
+              sizePx / 2,
+              sizePx / 2,
+              sizePx / 2,
+              TRACK_START_ANGLE,
+              TRACK_START_ANGLE + TRACK_SWEEP_ANGLE,
+            )}
+          />
+
+          <path
+            fill="none"
+            className="stroke-stone-800 value-arc"
+            strokeWidth="2"
+            strokeLinecap="round"
+            pathLength={1}
+            strokeDasharray={1}
+            strokeDashoffset={progress - 1}
+            d={describeArc(
+              sizePx / 2,
+              sizePx / 2,
+              sizePx / 2,
+              TRACK_START_ANGLE,
+              TRACK_START_ANGLE + TRACK_SWEEP_ANGLE,
+            )}
+          />
 
           <g
             className="grabbable rotating-component"

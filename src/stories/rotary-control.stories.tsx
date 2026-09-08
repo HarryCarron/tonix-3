@@ -1,7 +1,16 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import RotaryControl, {
   type RotaryControlStage,
 } from "@/components/controls/rotary-control/RotaryControl";
+
+function StagedDemo({ stages }: { stages: RotaryControlStage[] }) {
+  const [value, setValue] = useState(stages[3]?.value ?? stages[0].value);
+
+  return (
+    <RotaryControl mode="staged" stages={stages} value={value} onChange={setValue} />
+  );
+}
 
 const meta = {
   component: RotaryControl,
@@ -82,11 +91,7 @@ const timeStages: RotaryControlStage[] = [
 ];
 
 export const Staged: Story = {
-  args: {
-    mode: "staged",
-    stages: timeStages,
-    value: "8n",
-  },
+  render: () => <StagedDemo stages={timeStages} />,
   parameters: {
     docs: {
       description: {
