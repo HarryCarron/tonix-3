@@ -80,7 +80,7 @@ export function Meter({
   return (
     <div
       ref={container}
-      className={`relative w-full h-full overflow-hidden ${className ?? ""}`}
+      className={`relative w-full h-full overflow-hidden rounded-md border border-stone-300 ${className ?? ""}`}
     >
       <canvas ref={canvas} />
     </div>
