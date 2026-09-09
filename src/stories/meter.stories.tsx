@@ -72,7 +72,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: 14, height: 160 }}>
+      <div style={{ width: 5, height: 160 }}>
         <Story />
       </div>
     ),
@@ -106,7 +106,7 @@ export const Horizontal: Story = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: 240, height: 14 }}>
+      <div style={{ width: 240, height: 5 }}>
         <Story />
       </div>
     ),
