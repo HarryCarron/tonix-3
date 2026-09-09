@@ -22,6 +22,33 @@ function spikeAndDecayDemo(intervalMs: number, decayPerMs: number) {
   };
 }
 
+// Mocks the shape of a real Tone.Meter/Analyser tap: a plain object
+// exposing getValue(), the exact surface Meter's getValue prop expects to
+// be wired to (see repo issue #32) - a stand-in for wiring up a real audio
+// graph before one exists. Wanders toward a random target level with a
+// little jitter, the way a live RMS reading off actual audio would.
+function createMockMeterSource() {
+  let lastTime = performance.now();
+  let level = 0;
+  let target = Math.random();
+
+  return {
+    getValue(): number {
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (Math.random() < dt * 0.6) {
+        target = Math.random();
+      }
+      level += (target - level) * Math.min(1, dt * 6);
+
+      const jitter = (Math.random() - 0.5) * 0.05;
+      return Math.min(1, Math.max(0, level + jitter));
+    },
+  };
+}
+
 const meta = {
   component: Meter,
   title: "Meter",
@@ -106,6 +133,28 @@ export const SpikeAndDecay: Story = {
           "a random velocity followed by its own decay, with no shaping " +
           "from Meter itself - the same component as Vertical, fed a " +
           "differently-shaped signal.",
+      },
+    },
+  },
+};
+
+const mockMeterSource = createMockMeterSource();
+
+export const MockSource: Story = {
+  args: {
+    orientation: "vertical",
+    getValue: () => mockMeterSource.getValue(),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Wired to a standalone mock source object exposing getValue() " +
+          "- the same surface a real Tone.Meter/Analyser tap presents - " +
+          "so Meter's data contract can be exercised end-to-end (source " +
+          "object in, canvas out) without any real audio graph wired up " +
+          "yet. Swapping this for `() => toneMeterNode.getValue()` is the " +
+          "entire integration once a real node exists.",
       },
     },
   },
