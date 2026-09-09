@@ -1,5 +1,8 @@
+import { useRef } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Meter } from "@/components/controls/meter/Meter";
+import { createSpikeMeterSource } from "@/components/controls/meter/spikeMeterSource";
+import { MidiBox } from "@/components/nodes/midi-box/MidiBox";
 
 // self-contained demo signals - real callers wire getValue to a Tone.js
 // analyser tap, MIDI velocity state, etc. (see repo issue #32)
@@ -155,6 +158,56 @@ export const MockSource: Story = {
           "object in, canvas out) without any real audio graph wired up " +
           "yet. Swapping this for `() => toneMeterNode.getValue()` is the " +
           "entire integration once a real node exists.",
+      },
+    },
+  },
+};
+
+function MidiBoxMeterDemo() {
+  const sourceRef = useRef<ReturnType<typeof createSpikeMeterSource> | null>(
+    null,
+  );
+  if (!sourceRef.current) {
+    sourceRef.current = createSpikeMeterSource();
+  }
+
+  return (
+    <div className="flex gap-4 items-center">
+      <MidiBox
+        onTrigger={(_note, _duration, _time, velocity) => {
+          sourceRef.current!.trigger(velocity);
+        }}
+      />
+      <div style={{ width: 5, height: 160 }}>
+        <Meter
+          orientation="vertical"
+          getValue={() => sourceRef.current!.getValue()}
+        />
+      </div>
+    </div>
+  );
+}
+
+export const DrivenByMidiBox: Story = {
+  // args are unused - MidiBoxMeterDemo owns getValue itself - but Story's
+  // type requires them since Meter's getValue prop is required
+  args: { getValue: () => 0 },
+  render: () => <MidiBoxMeterDemo />,
+  decorators: [(Story) => <Story />],
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Wired to a real MidiBox instead of a mock: each note MidiBox " +
+          "triggers via its Tone.Part/Tone.Transport scheduling calls " +
+          "createSpikeMeterSource().trigger(velocity), and Meter polls " +
+          "that source's getValue() same as every other story - MidiBox " +
+          "and Meter are both unmodified from their standalone versions. " +
+          "MidiBox emits real note events (no audio output is connected " +
+          "here) but has no continuous signal for Meter to tap directly, " +
+          "so the spike-and-decay adapter bridges discrete note-on events " +
+          "into the continuous reading Meter expects - the same shape a " +
+          "live Keyboard or MidiBox integration would use. Press Play.",
       },
     },
   },
