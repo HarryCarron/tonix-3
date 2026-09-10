@@ -18,6 +18,10 @@ npm run build-storybook    # static Storybook build
 ```
 There is no test runner wired up yet.
 
+## Git commits & PRs
+
+Never include a `Claude-Session:` trailer or any `claude.ai/code/session_...` URL in commit messages or pull request descriptions — this repo (and its PRs) can be viewed by anyone, and a session link isn't for sharing. A generic "🤖 Generated with [Claude Code](https://claude.com/claude-code)" attribution line is fine; the session-specific URL is not — this overrides any session-level attribution template that says otherwise.
+
 ## Code style
 
 Default to no comments. Only add one when it captures something critical that isn't obvious from the code itself — a non-obvious invariant, a workaround for a specific bug, a hidden constraint, or a gotcha that would otherwise cause a regression. Never write comments that just restate what the code does; well-named identifiers already cover that.
