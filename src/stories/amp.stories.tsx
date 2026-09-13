@@ -12,11 +12,11 @@ const meta = {
           "An ADSR (Attack / Decay / Sustain / Release) envelope editor. " +
           "Drag the handle at the end of each stage to reshape it; click " +
           "a stage's filled area to cycle its curve between linear, " +
-          "exponential and cosine. The four `RotaryControl`s below are " +
-          "currently visual placeholders — `RotaryControl` doesn't have a " +
-          "controlled-value prop yet, so they aren't wired to the " +
-          "envelope's actual attack/decay/sustain/release values. No " +
-          "audio engine is wired up yet either — this only edits the " +
+          "exponential and cosine. Optionally-controlled like " +
+          "`RotaryControl` - pass both `value`/`onChange` to drive the " +
+          "envelope externally (e.g. a Polysynth audio bridge), or omit " +
+          "both to let it own its state internally, as this story does. " +
+          "No audio engine is wired up here — this only edits the " +
           "envelope shape visually.",
       },
     },

@@ -3,7 +3,7 @@ import { StaticEditableInput } from "../../controls/static-editable-input/Static
 
 export default function Menu() {
   return (
-    <div className="outer-menu-container flex w-full h-full shadow-md flex-col">
+    <div className="outer-menu-container flex w-full h-full shadow-md flex-col  border-r border-stone-200">
       <Header />
     </div>
   );

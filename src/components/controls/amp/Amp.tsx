@@ -9,7 +9,13 @@ import {
 import CanvasUtilities from "@/utils/canvas";
 import "./Amp.css";
 import colors from "tailwindcss/colors";
-import type { ADSR, AmpEnvelope, ClientPosition } from "./types";
+import {
+  DEFAULT_ADSR,
+  MAX_SUSTAIN_WIDTH,
+  type ADSR,
+  type AmpEnvelope,
+  type ClientPosition,
+} from "./types";
 import { computeStageXPositions } from "./stage-positions";
 import { trackGlobalMouseMove } from "@/utils/track-global-mouse-move";
 import { AmpInteractionLayer } from "./AmpInteractionLayer";
@@ -21,12 +27,15 @@ type LineParams = [x1: number, y1: number, x2: number, y2: number];
 // matches CanvasUtilities.circle's (x, y, r) signature
 type CircleParams = [x: number, y: number, r: number];
 
-// sustain is a held level, not a timed stage like attack/decay/release - its
-// "width" only exists to give its handle a draggable target, so it's capped
-// small rather than being able to eat the same timeline space as real stages
-const MAX_SUSTAIN_WIDTH = 0.05;
+interface AmpProps {
+  // optionally-controlled: pass both to drive the envelope externally (e.g.
+  // from a Polysynth audio bridge); omit both to let Amp own its own value
+  // internally, same convention as RotaryControl
+  value?: ADSR;
+  onChange?: (value: ADSR) => void;
+}
 
-export function Amp() {
+export function Amp({ value, onChange }: AmpProps) {
   const xPad = 10;
   const yPad = 10;
 
@@ -34,16 +43,17 @@ export function Amp() {
     null,
   );
 
-  const [amp, setAmp] = useState<ADSR>({
-    attack: 0.1,
-    attackCurve: 0,
-    decay: 0.2,
-    decayCurve: 0,
-    sustain: 0.5,
-    sustainWidth: MAX_SUSTAIN_WIDTH,
-    release: 0.3,
-    releaseCurve: 0,
-  });
+  const [internalAmp, setInternalAmp] = useState<ADSR>(DEFAULT_ADSR);
+  const amp = value ?? internalAmp;
+
+  const updateAmp = (updater: (prev: ADSR) => ADSR) => {
+    const next = updater(amp);
+    if (onChange) {
+      onChange(next);
+    } else {
+      setInternalAmp(next);
+    }
+  };
 
   const utils = useRef<{
     canvas: CanvasUtilities | null;
@@ -305,7 +315,7 @@ export function Amp() {
     switch (i) {
       case 0: {
         const attack = validateValue(x);
-        setAmp((state) => {
+        updateAmp((state) => {
           if (widthValid({ ...state, attack })) {
             return { ...state, attack };
           }
@@ -316,13 +326,12 @@ export function Amp() {
       case 1: {
         const decay = validateValue(x - amp.attack);
         const sustain = validateValue(y);
-        setAmp((state) => {
-          if (widthValid({ ...state, decay })) {
-            return { ...state, decay };
-          }
-          return state;
+        updateAmp((state) => {
+          const withDecay = widthValid({ ...state, decay })
+            ? { ...state, decay }
+            : state;
+          return { ...withDecay, sustain };
         });
-        setAmp((state) => ({ ...state, sustain }));
         break;
       }
       case 2: {
@@ -333,16 +342,16 @@ export function Amp() {
         const decay = validateValue(x - amp.attack - MAX_SUSTAIN_WIDTH);
         const sustain = validateValue(y);
 
-        setAmp((state) => {
-          if (
-            widthValid({ ...state, decay, sustainWidth: MAX_SUSTAIN_WIDTH })
-          ) {
-            return { ...state, decay, sustainWidth: MAX_SUSTAIN_WIDTH };
-          }
-          return state;
+        updateAmp((state) => {
+          const withDecay = widthValid({
+            ...state,
+            decay,
+            sustainWidth: MAX_SUSTAIN_WIDTH,
+          })
+            ? { ...state, decay, sustainWidth: MAX_SUSTAIN_WIDTH }
+            : state;
+          return { ...withDecay, sustain };
         });
-
-        setAmp((state) => ({ ...state, sustain }));
 
         break;
       }
@@ -350,7 +359,7 @@ export function Amp() {
         const release = validateValue(
           x - (amp.attack + amp.decay + amp.sustainWidth),
         );
-        setAmp((state) => {
+        updateAmp((state) => {
           if (widthValid({ ...state, release })) {
             return { ...state, release };
           }
@@ -374,17 +383,17 @@ export function Amp() {
     switch (i) {
       case 0: {
         currentCurve = amp.attackCurve;
-        set = () => setAmp({ ...amp, attackCurve: currentCurve });
+        set = () => updateAmp((state) => ({ ...state, attackCurve: currentCurve }));
         break;
       }
       case 1: {
         currentCurve = amp.decayCurve;
-        set = () => setAmp({ ...amp, decayCurve: currentCurve });
+        set = () => updateAmp((state) => ({ ...state, decayCurve: currentCurve }));
         break;
       }
       case 3: {
         currentCurve = amp.releaseCurve;
-        set = () => setAmp({ ...amp, releaseCurve: currentCurve });
+        set = () => updateAmp((state) => ({ ...state, releaseCurve: currentCurve }));
         break;
       }
       default:

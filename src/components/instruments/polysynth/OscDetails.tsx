@@ -10,14 +10,22 @@ import { PiWaveSquare, PiWaveSawtooth, PiWaveSine } from "react-icons/pi";
 import { Waveform } from "@/components/controls/waveform/Waveform";
 import Additive from "@/components/controls/additive/Additive";
 import Amp from "@/components/controls/amp/Amp";
+import type { ADSR } from "@/components/controls/amp/types";
 import type { OscDetailsView } from "./oscDetailsView";
 
 interface OscDetailsProps {
   view: OscDetailsView;
   onViewChange: (view: OscDetailsView) => void;
+  envelope: ADSR;
+  onEnvelopeChange: (envelope: ADSR) => void;
 }
 
-export function OscDetails({ view, onViewChange }: OscDetailsProps) {
+export function OscDetails({
+  view,
+  onViewChange,
+  envelope,
+  onEnvelopeChange,
+}: OscDetailsProps) {
   return (
     <div className="mt-3 border-stone-200 border rounded-lg overflow-hidden">
       <div className="flex p-2">
@@ -46,7 +54,9 @@ export function OscDetails({ view, onViewChange }: OscDetailsProps) {
 
       <div className="h-[100px] w-full d-flex bg-stone-100 border-t border-stone-300">
         {view === "wave" && <Waveform />}
-        {view === "envelope" && <Amp />}
+        {view === "envelope" && (
+          <Amp value={envelope} onChange={onEnvelopeChange} />
+        )}
         {view === "additive" && <Additive />}
       </div>
     </div>

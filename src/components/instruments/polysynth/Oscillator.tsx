@@ -12,6 +12,16 @@ interface OscillatorProps {
   onWaveChange: (wave: OscWave) => void;
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
+  // semitones (whole numbers) - converted to cents at the audio bridge
+  detune: number;
+  onDetuneChange: (detune: number) => void;
+  // normalized 0-1, same convention as RotaryControl's continuous mode
+  phase: number;
+  onPhaseChange: (phase: number) => void;
+  gain: number;
+  onGainChange: (gain: number) => void;
+  pan: number;
+  onPanChange: (pan: number) => void;
 }
 
 export function Oscillator({
@@ -21,9 +31,17 @@ export function Oscillator({
   onWaveChange,
   enabled,
   onEnabledChange,
+  detune,
+  onDetuneChange,
+  phase,
+  onPhaseChange,
+  gain,
+  onGainChange,
+  pan,
+  onPanChange,
 }: OscillatorProps) {
   return (
-    <div id={id} className="w-full py-3 border-b border-stone-200">
+    <div id={id} className="w-full py-3 border-b border-stone-300">
       <div className="flex gap-1">
         <div className="flex flex-col p-2">
           <div className="pix-font text-xl color-stone-200 flex justify-center">
@@ -35,23 +53,28 @@ export function Oscillator({
         </div>
         <div className="w-[100px]">
           <ControlContainer label="Wave">
-            <WaveSelectorWithFreq value={wave} onValueChange={onWaveChange} />
+            <WaveSelectorWithFreq
+              value={wave}
+              onValueChange={onWaveChange}
+              detune={detune}
+              onDetuneChange={onDetuneChange}
+            />
           </ControlContainer>
         </div>
         <div className="flex-auto"></div>
         <div className="flex-1">
           <ControlContainer label="Phase">
-            <RotaryControl />
+            <RotaryControl value={phase} onChange={onPhaseChange} />
           </ControlContainer>
         </div>
         <div className="flex-1">
           <ControlContainer label="Gain">
-            <RotaryControl />
+            <RotaryControl value={gain} onChange={onGainChange} />
           </ControlContainer>
         </div>
         <div className="flex-1">
           <ControlContainer label="Pan">
-            <RotaryControl />
+            <RotaryControl value={pan} onChange={onPanChange} />
           </ControlContainer>
         </div>
 

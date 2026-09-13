@@ -43,14 +43,33 @@ export function WaveSelector({ value, onValueChange }: WaveSelectorProps) {
   );
 }
 
+interface WaveSelectorWithFreqProps extends WaveSelectorProps {
+  // semitones (whole numbers) - converted to cents at the audio bridge
+  detune: number;
+  onDetuneChange: (detune: number) => void;
+}
+
 export function WaveSelectorWithFreq({
   value,
   onValueChange,
-}: WaveSelectorProps) {
+  detune,
+  onDetuneChange,
+}: WaveSelectorWithFreqProps) {
   return (
     <>
       <WaveSelector value={value} onValueChange={onValueChange} />
-      <Input className="mt-2 p-3 h-6" value={"0.00"} />
+      <Input
+        className="mt-2 p-3 h-6"
+        type="number"
+        step="0.01"
+        value={detune.toFixed(2)}
+        onChange={(e) => {
+          const parsed = parseFloat(e.target.value);
+          if (!Number.isNaN(parsed)) {
+            onDetuneChange(parsed);
+          }
+        }}
+      />
     </>
   );
 }

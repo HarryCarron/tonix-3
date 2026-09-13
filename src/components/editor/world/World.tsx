@@ -61,8 +61,8 @@ function Background() {
         id="pattern-circles"
         x="0"
         y="0"
-        width="50"
-        height="50"
+        width="30"
+        height="30"
         patternUnits="userSpaceOnUse"
         patternContentUnits="userSpaceOnUse"
       >
