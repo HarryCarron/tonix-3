@@ -19,7 +19,7 @@ export function Polysynth() {
   );
 
   return (
-    <Card className="py-3 px-0 w-[320px]">
+    <Card className="py-3 px-0 w-[340px]">
       <CardHeader>
         <span className="pix-font color-stone-500 text-4xl">Polysynth</span>
       </CardHeader>

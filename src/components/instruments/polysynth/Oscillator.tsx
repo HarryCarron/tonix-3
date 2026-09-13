@@ -1,4 +1,5 @@
 import RotaryControl from "@/components/controls/rotary-control/RotaryControl";
+import { Meter } from "@/components/controls/meter/Meter";
 import { Switch } from "@/components/ui/switch";
 import { ControlContainer } from "./ControlContainer";
 import { WaveSelectorWithFreq } from "./WaveSelector";
@@ -24,35 +25,43 @@ export function Oscillator({
   return (
     <div id={id} className="w-full py-3 border-b border-stone-200">
       <div className="flex gap-1">
-        <span className="flex flex-col p-2">
-          <span className="pix-font text-xl color-stone-200 flex justify-center">
+        <div className="flex flex-col p-2">
+          <div className="pix-font text-xl color-stone-200 flex justify-center">
             {number + 1}
-          </span>
-          <span className="flex-auto flex items-center justify-center">
+          </div>
+          <div className="flex-auto flex items-center justify-center">
             <Switch checked={enabled} onCheckedChange={onEnabledChange} />
-          </span>
-        </span>
-        <span className="flex-auto">
+          </div>
+        </div>
+        <div className="w-[100px]">
           <ControlContainer label="Wave">
             <WaveSelectorWithFreq value={wave} onValueChange={onWaveChange} />
           </ControlContainer>
-        </span>
-        <span className="flex-auto"></span>
-        <span>
+        </div>
+        <div className="flex-auto"></div>
+        <div className="flex-1">
           <ControlContainer label="Phase">
             <RotaryControl />
           </ControlContainer>
-        </span>
-        <span>
+        </div>
+        <div className="flex-1">
           <ControlContainer label="Gain">
             <RotaryControl />
           </ControlContainer>
-        </span>
-        <span>
+        </div>
+        <div className="flex-1">
           <ControlContainer label="Pan">
             <RotaryControl />
           </ControlContainer>
-        </span>
+        </div>
+
+        <div className="w-[20px]">
+          <ControlContainer>
+            <div className="h-[75px]">
+              <Meter orientation="vertical" getValue={() => 0} />
+            </div>
+          </ControlContainer>
+        </div>
       </div>
     </div>
   );
