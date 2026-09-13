@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import * as Tone from "tone";
+import { useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,37 +12,27 @@ import {
 } from "@/components/ui/select";
 import { Meter } from "@/components/controls/meter/Meter";
 import { createSpikeMeterSource } from "@/components/controls/meter/spikeMeterSource";
-import { PATTERN_LENGTH, TEST_PATTERNS } from "./MidiPattern";
-import type { MidiNoteEvent, MidiPattern } from "./MidiPattern";
+import { TEST_PATTERNS } from "./MidiPattern";
+import type { MidiPattern } from "./MidiPattern";
+import {
+  useMidiPatternPlayer,
+  type MidiTriggerHandler,
+} from "./useMidiPatternPlayer";
 import { FiPlay } from "react-icons/fi";
 import { TbPlayerPause } from "react-icons/tb";
 
-export type MidiTriggerHandler = (
-  note: string,
-  duration: string | number,
-  time: number,
-  velocity: number,
-) => void;
+export type { MidiTriggerHandler };
 
 interface MidiBoxProps {
   patterns?: MidiPattern[];
   onTrigger?: MidiTriggerHandler;
 }
 
-type TransportState = "stopped" | "playing" | "paused";
-
 // fast enough to read as a near-instant hit, not a synth-style release -
 // just enough decay for the meter to feel alive rather than blinking
 const METER_DECAY_PER_SECOND = 18;
 
 export function MidiBox({ patterns = TEST_PATTERNS, onTrigger }: MidiBoxProps) {
-  const [patternIndex, setPatternIndex] = useState(0);
-  const [transportState, setTransportState] =
-    useState<TransportState>("stopped");
-
-  const onTriggerRef = useRef(onTrigger);
-  onTriggerRef.current = onTrigger;
-
   const meterSourceRef = useRef<ReturnType<
     typeof createSpikeMeterSource
   > | null>(null);
@@ -51,40 +40,18 @@ export function MidiBox({ patterns = TEST_PATTERNS, onTrigger }: MidiBoxProps) {
     meterSourceRef.current = createSpikeMeterSource(METER_DECAY_PER_SECOND);
   }
 
-  useEffect(() => {
-    const part = new Tone.Part<MidiNoteEvent>((time, event) => {
-      const velocity = event.velocity ?? 0.8;
-      meterSourceRef.current!.trigger(velocity);
-      onTriggerRef.current?.(event.note, event.duration, time, velocity);
-    }, patterns[patternIndex]);
-    part.loop = true;
-    part.loopEnd = PATTERN_LENGTH;
-    part.start(0);
-
-    return () => {
-      part.dispose();
-    };
-  }, [patterns, patternIndex]);
-
-  const handlePlay = async () => {
-    await Tone.start();
-    Tone.getTransport().start();
-    setTransportState("playing");
-  };
-
-  const handlePause = () => {
-    Tone.getTransport().pause();
-    setTransportState("paused");
-  };
-
-  const handleStop = () => {
-    Tone.getTransport().stop();
-    setTransportState("stopped");
-  };
-
-  const handleRewind = () => {
-    Tone.getTransport().position = 0;
-  };
+  const {
+    patternIndex,
+    setPatternIndex,
+    transportState,
+    handlePlay,
+    handlePause,
+    handleStop,
+    handleRewind,
+  } = useMidiPatternPlayer(patterns, (note, duration, time, velocity) => {
+    meterSourceRef.current!.trigger(velocity);
+    onTrigger?.(note, duration, time, velocity);
+  });
 
   return (
     <Card className="py-3 px-0 w-[280px]">

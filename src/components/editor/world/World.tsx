@@ -2,7 +2,7 @@ import { ENV } from "@/env";
 import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
 import { NodeMap } from "@/utils/node-map";
-import colors from "tailwindcss/colors";
+import { WorldBackground } from "./WorldBackground";
 
 interface WorldNode {
   id: string;
@@ -30,6 +30,10 @@ export function World() {
         width: ENV.worldDims + "px",
       }}
     >
+      <WorldBackground
+        width={ENV.worldDims + "px"}
+        height={ENV.worldDims + "px"}
+      />
       {INITIAL_NODES.map(({ id, type, position }) => {
         const NodeComponent = NodeMap[type];
 
@@ -45,52 +49,6 @@ export function World() {
           </span>
         );
       })}
-      <Background />
     </div>
-  );
-}
-
-function Background() {
-  return (
-    <svg
-      width={ENV.worldDims + "px"}
-      height={ENV.worldDims + "px"}
-      className="inset-0 pointer-events-none"
-    >
-      <pattern
-        id="pattern-circles"
-        x="0"
-        y="0"
-        width="30"
-        height="30"
-        patternUnits="userSpaceOnUse"
-        patternContentUnits="userSpaceOnUse"
-      >
-        <circle
-          id="pattern-circle"
-          cx="10"
-          cy="10"
-          r="1.6257413380501518"
-          fill={colors.stone[200]}
-        ></circle>
-      </pattern>
-
-      <rect
-        x="0"
-        y="0"
-        width={ENV.worldDims + "px"}
-        height={ENV.worldDims + "px"}
-        fill={colors.stone[50]}
-      ></rect>
-
-      <rect
-        id="rect"
-        x="0"
-        y="0"
-        width={ENV.worldDims + "px"}
-        height={ENV.worldDims + "px"}
-        fill="url(#pattern-circles)"
-      ></rect>
-    </svg>
   );
 }
