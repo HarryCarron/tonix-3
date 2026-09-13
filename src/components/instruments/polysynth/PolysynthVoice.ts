@@ -35,6 +35,16 @@ export interface PolysynthVoiceOptions extends MonophonicOptions {
   oscillator1Pan: PolysynthPanOptions;
   oscillator2Pan: PolysynthPanOptions;
   envelope: Partial<Tone.EnvelopeOptions>;
+  // wiring, not a settable audio parameter - not part of getDefaults()
+  // (Tone.Gain/Meter instances need a real context, unavailable in a
+  // static method). When provided, every voice's oscillatorN output also
+  // fans out here (in addition to its own mix bus), so a single shared
+  // node per oscillator slot sees the combined signal of every currently
+  // active voice for that oscillator - which is what a per-oscillator UI
+  // meter on a polyphonic instrument actually wants to show.
+  oscillator0MeterTap?: Tone.InputNode;
+  oscillator1MeterTap?: Tone.InputNode;
+  oscillator2MeterTap?: Tone.InputNode;
 }
 
 interface OscillatorChain {
@@ -110,16 +120,21 @@ export class PolysynthVoice extends Monophonic<PolysynthVoiceOptions> {
       opts.oscillator0Gain,
       opts.oscillator0Pan,
       () => this.onsilence(this),
+      opts.oscillator0MeterTap,
     );
     const osc1 = this._buildOscillatorChain(
       opts.oscillator1,
       opts.oscillator1Gain,
       opts.oscillator1Pan,
+      undefined,
+      opts.oscillator1MeterTap,
     );
     const osc2 = this._buildOscillatorChain(
       opts.oscillator2,
       opts.oscillator2Gain,
       opts.oscillator2Pan,
+      undefined,
+      opts.oscillator2MeterTap,
     );
 
     this.oscillator0 = osc0.oscillator;
@@ -140,6 +155,7 @@ export class PolysynthVoice extends Monophonic<PolysynthVoiceOptions> {
     gainOptions: PolysynthGainOptions,
     panOptions: PolysynthPanOptions,
     onstop?: () => void,
+    meterTap?: Tone.InputNode,
   ): OscillatorChain {
     // Oscillator's options type is a discriminated union keyed off a
     // literal `type`; ours is a plain widened ToneOscillatorType, so the
@@ -158,6 +174,9 @@ export class PolysynthVoice extends Monophonic<PolysynthVoiceOptions> {
     const panner = new Tone.Panner({ context: this.context, pan: panOptions.pan });
 
     oscillator.chain(gain, panner, this._mixBus);
+    if (meterTap) {
+      panner.connect(meterTap);
+    }
     this.frequency.connect(oscillator.frequency);
     // deliberately NOT connecting this.detune to oscillator.detune: Tone
     // treats connecting a Signal into another (already-independently-set)

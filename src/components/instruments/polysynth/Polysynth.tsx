@@ -21,9 +21,16 @@ interface PolysynthProps {
   // usage, unaffected by any of this. Same convention as RotaryControl/Amp.
   audioState?: PolysynthAudioState;
   onAudioStateChange?: (state: PolysynthAudioState) => void;
+  // per-oscillator level, from the same audio bridge that owns audioState -
+  // omit for a silent meter (production/uncontrolled usage)
+  getOscillatorMeterLevel?: (index: number) => number;
 }
 
-export function Polysynth({ audioState, onAudioStateChange }: PolysynthProps) {
+export function Polysynth({
+  audioState,
+  onAudioStateChange,
+  getOscillatorMeterLevel,
+}: PolysynthProps) {
   const [detailsView, setDetailsView] = useState<OscDetailsView>("envelope");
   const [internalAudioState, setInternalAudioState] =
     useState<PolysynthAudioState>(DEFAULT_POLYSYNTH_AUDIO_STATE);
@@ -89,6 +96,11 @@ export function Polysynth({ audioState, onAudioStateChange }: PolysynthProps) {
                 pan={osc.pan}
                 onPanChange={(pan) =>
                   updateOscillator(i, (o) => ({ ...o, pan }))
+                }
+                meterGetValue={
+                  getOscillatorMeterLevel
+                    ? () => getOscillatorMeterLevel(i)
+                    : undefined
                 }
               />
             );

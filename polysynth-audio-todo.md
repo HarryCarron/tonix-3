@@ -126,6 +126,61 @@ exactly as it is today — uncontrolled, silent, unaffected.
   inert - `PolySynth.set({detune: X})` note-wide detuning isn't wired to
   affect sound. Nothing in this UI currently calls that, so not a
   regression, just a documented gap.
+- [x] Wired each oscillator's `Meter` to real per-oscillator level (was a
+      permanent `getValue={() => 0}` stub). `PolysynthVoice` gained an
+      optional `oscillatorNMeterTap` per oscillator - a shared `Tone.Meter`
+      (one per oscillator *slot*, owned by the bridge, not per-voice) that
+      every currently active voice's post-pan oscillatorN signal fans into
+      in addition to its own mix bus. Since `PolySynth` pools many voice
+      instances (one per held note), tapping one voice wouldn't reflect
+      the instrument's real polyphonic output - summing all active voices'
+      same-slot signal into one shared meter is what a per-oscillator UI
+      meter on a polyphonic synth actually needs to show. Bridge exposes
+      `getOscillatorLevel(index)`; `Polysynth` takes an optional
+      `getOscillatorMeterLevel` prop threaded to each `Oscillator`'s
+      `meterGetValue` (defaults to a silent `() => 0`, so production/
+      uncontrolled usage is unaffected). Verified two ways, not just "it
+      moved": captured a 12-frame sequence during playback showing the
+      meter genuinely rising/falling with the music (not flat), then
+      disabled oscillator 2 mid-playback and confirmed *only* its meter
+      went fully silent across all 12 frames while oscillators 1 and 3
+      kept responding normally to the same notes.
+- [x] Smoothed the oscillator meters after user feedback that they jumped
+      "aggressively" — `Tone.Meter`'s own `smoothing` only eases the decay
+      side, so every note's attack still snapped instantly (`Meter`'s own
+      contract is "no shaping, that's the source's job", so the fix
+      belongs in the bridge, not the shared component). Added
+      `createSmoothedMeterReader` in `usePolysynthAudioBridge.ts` - a
+      framerate-independent exponential approach in both directions, same
+      dt-based idiom as the other meter sources in this codebase. Verified
+      with a 12-frame sequence showing gradual easing between frames
+      instead of instant jumps to wildly different heights.
+- [x] Made "Crystal Waters" the default pattern selection (was always
+      Pattern 1) — the dropdown displays index 0 as selected before the
+      async MIDI load even resolves, so once it loads, an effect now
+      explicitly re-selects its (now-appended) index.
+- [x] Added a **Patch** dropdown to `PlaybackHarnessBar` — the second
+      piece of a working preset system, not just the UI: `polysynthPresets.ts`
+      holds named `PolysynthAudioState` objects (first one, "Super Saw
+      Lead", built from real user-specified values: 3 detuned saws +
+      a sharp/short envelope), and picking one calls `onPatchChange`
+      (threaded `WorldStoryHarness` → `PlaybackHarnessBar`, wired to the
+      bridge's `onAudioStateChange` in the story) - no new plumbing needed
+      on `Polysynth`'s side since the controlled `audioState` prop already
+      accepts a full replacement object.
+- [x] Found and fixed the same "default-selected but never applied" bug a
+      second time, this time for patches: Radix's `onValueChange` only
+      fires on an actual value *change*, so a dropdown whose state already
+      defaults to the one-and-only preset's index never fires it on
+      selection - re-picking "Super Saw Lead" was a visible no-op even
+      though the trigger displayed it as selected. Fixed by explicitly
+      calling `onPatchChange` once when `patches` becomes available,
+      rather than relying on the Select firing on mount. Verified the
+      patch's oscillator/envelope values render exactly as specified
+      (Saw/64/24/50/0.00, Saw/30/24/50/-12.05, Saw/50/24/50/0.12, "2% LIN
+      7% EXP 22% LIN 30% EXP") immediately on load, with no manual
+      reselection needed, and that real audio still plays (150 new
+      oscillator starts over 2s) with the preset active.
 
 ## Wrinkles / things to watch
 

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Polysynth } from "@/components/instruments/polysynth/Polysynth";
 import { usePolysynthAudioBridge } from "@/components/instruments/polysynth/usePolysynthAudioBridge";
+import { POLYSYNTH_PRESETS } from "@/components/instruments/polysynth/polysynthPresets";
 import { WorldStoryHarness } from "./harness/WorldStoryHarness";
 
 const meta = {
@@ -37,14 +38,19 @@ export const Default: Story = {
 };
 
 function LiveInWorldHarnessDemo() {
-  const { audioState, onAudioStateChange, trigger } =
+  const { audioState, onAudioStateChange, trigger, getOscillatorLevel } =
     usePolysynthAudioBridge();
 
   return (
-    <WorldStoryHarness onTrigger={trigger}>
+    <WorldStoryHarness
+      onTrigger={trigger}
+      patches={POLYSYNTH_PRESETS}
+      onPatchChange={onAudioStateChange}
+    >
       <Polysynth
         audioState={audioState}
         onAudioStateChange={onAudioStateChange}
+        getOscillatorMeterLevel={getOscillatorLevel}
       />
     </WorldStoryHarness>
   );

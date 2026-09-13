@@ -19,10 +19,16 @@ import { loadMidiFilePattern, type LoadedMidiFile } from "./loadMidiFile";
 import gypsyWomanMidiUrl from "../../../midi/Crystal Waters - Gypsy Woman.mid?url";
 import { FiPlay } from "react-icons/fi";
 import { TbPlayerPause } from "react-icons/tb";
+import type { PolysynthPreset } from "@/components/instruments/polysynth/polysynthPresets";
+import type { PolysynthAudioState } from "@/components/instruments/polysynth/polysynthAudioState";
 
 interface PlaybackHarnessBarProps {
   patterns?: MidiPattern[];
   onTrigger?: MidiTriggerHandler;
+  // optional - only shown when both are provided, so this bar stays
+  // usable for harnesses that have nothing to preset (e.g. no synth)
+  patches?: PolysynthPreset[];
+  onPatchChange?: (state: PolysynthAudioState) => void;
 }
 
 // A slim transport header bar for Storybook harnesses that need a note
@@ -34,10 +40,24 @@ interface PlaybackHarnessBarProps {
 export function PlaybackHarnessBar({
   patterns = TEST_PATTERNS,
   onTrigger,
+  patches,
+  onPatchChange,
 }: PlaybackHarnessBarProps) {
   const [importedMidi, setImportedMidi] = useState<LoadedMidiFile | null>(
     null,
   );
+  const [patchIndex, setPatchIndex] = useState(0);
+
+  // the dropdown displays index 0 as selected from the start (it's the
+  // initial state), but Radix's onValueChange only fires on an actual
+  // value change - without this, picking the already-"selected" default
+  // patch would silently do nothing the first time
+  useEffect(() => {
+    if (patches && patches.length > 0) {
+      onPatchChange?.(patches[0].state);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patches]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +84,7 @@ export function PlaybackHarnessBar({
     ...patterns.map(() => undefined),
     ...(importedMidi ? [importedMidi.loopLength] : []),
   ];
+  const importedMidiIndex = patterns.length;
 
   const {
     patternIndex,
@@ -74,6 +95,15 @@ export function PlaybackHarnessBar({
     handleStop,
     handleRewind,
   } = useMidiPatternPlayer(allPatterns, onTrigger, loopLengths);
+
+  // default to the imported song once it's loaded, rather than leaving
+  // the hardcoded Pattern 1 selected
+  useEffect(() => {
+    if (importedMidi) {
+      setPatternIndex(importedMidiIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importedMidi]);
 
   return (
     <div className="w-full h-12 bg-card border-b border-stone-300 flex items-center gap-2 px-3">
@@ -95,6 +125,30 @@ export function PlaybackHarnessBar({
           </SelectGroup>
         </SelectContent>
       </Select>
+      {patches && patches.length > 0 && (
+        <Select
+          value={String(patchIndex)}
+          onValueChange={(value) => {
+            const index = Number(value);
+            setPatchIndex(index);
+            onPatchChange?.(patches[index].state);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a patch" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Patch</SelectLabel>
+              {patches.map((patch, index) => (
+                <SelectItem key={index} value={String(index)}>
+                  {patch.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      )}
       <div className="flex gap-[2px]">
         <Button
           variant="outline"

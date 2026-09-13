@@ -22,6 +22,9 @@ interface OscillatorProps {
   onGainChange: (gain: number) => void;
   pan: number;
   onPanChange: (pan: number) => void;
+  // polled every animation frame, same contract as Meter's own getValue -
+  // defaults to a silent meter when omitted (production/uncontrolled usage)
+  meterGetValue?: () => number;
 }
 
 export function Oscillator({
@@ -39,6 +42,7 @@ export function Oscillator({
   onGainChange,
   pan,
   onPanChange,
+  meterGetValue = () => 0,
 }: OscillatorProps) {
   return (
     <div id={id} className="w-full py-3 border-b border-stone-300">
@@ -81,7 +85,7 @@ export function Oscillator({
         <div className="w-[20px]">
           <ControlContainer>
             <div className="h-[75px]">
-              <Meter orientation="vertical" getValue={() => 0} />
+              <Meter orientation="vertical" getValue={meterGetValue} />
             </div>
           </ControlContainer>
         </div>

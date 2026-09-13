@@ -61,10 +61,68 @@ function buildOscillatorSetOptions(osc: OscillatorAudioState) {
   };
 }
 
+// one shared Meter per oscillator slot - every currently active voice's
+// oscillatorN output fans into the same tap (see PolysynthVoice's
+// oscillatorNMeterTap), so each meter reflects that oscillator's combined
+// level across the whole (polyphonic) instrument, not just one voice
+function createOscillatorMeterTaps() {
+  return {
+    oscillator0: new Tone.Meter({ normalRange: true }),
+    oscillator1: new Tone.Meter({ normalRange: true }),
+    oscillator2: new Tone.Meter({ normalRange: true }),
+  };
+}
+
+function readMeter(meter: Tone.Meter): number {
+  const value = meter.getValue();
+  return typeof value === "number" ? value : (value[0] ?? 0);
+}
+
+// Meter itself renders getValue() raw every frame with no shaping by
+// design (attack/decay shaping is the source's job) - Tone.Meter's own
+// `smoothing` option only softens the decay side, so every note's attack
+// still snaps instantly, reading as aggressive jumping on discrete note
+// onsets. This eases both directions with a simple framerate-independent
+// exponential approach, same dt-based idiom as the other meter sources
+// in this codebase (e.g. spikeMeterSource, the mock meter demo sources).
+function createSmoothedMeterReader(meter: Tone.Meter, rate = 8) {
+  let smoothed = 0;
+  let lastTime = performance.now();
+  return () => {
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+    smoothed += (readMeter(meter) - smoothed) * Math.min(1, dt * rate);
+    return smoothed;
+  };
+}
+
 export function usePolysynthAudioBridge() {
+  const meterTapsRef = useRef<ReturnType<
+    typeof createOscillatorMeterTaps
+  > | null>(null);
+  if (!meterTapsRef.current) {
+    meterTapsRef.current = createOscillatorMeterTaps();
+  }
+
+  const meterReadersRef = useRef<Array<() => number> | null>(null);
+  if (!meterReadersRef.current) {
+    const taps = meterTapsRef.current;
+    meterReadersRef.current = [
+      createSmoothedMeterReader(taps.oscillator0),
+      createSmoothedMeterReader(taps.oscillator1),
+      createSmoothedMeterReader(taps.oscillator2),
+    ];
+  }
+
   const synthRef = useRef<Tone.PolySynth<PolysynthVoice> | null>(null);
   if (!synthRef.current) {
-    synthRef.current = new Tone.PolySynth(PolysynthVoice).toDestination();
+    const taps = meterTapsRef.current;
+    synthRef.current = new Tone.PolySynth(PolysynthVoice, {
+      oscillator0MeterTap: taps.oscillator0,
+      oscillator1MeterTap: taps.oscillator1,
+      oscillator2MeterTap: taps.oscillator2,
+    }).toDestination();
   }
 
   const [audioState, setAudioState] = useState<PolysynthAudioState>(
@@ -102,8 +160,12 @@ export function usePolysynthAudioBridge() {
 
   useEffect(() => {
     const synth = synthRef.current!;
+    const taps = meterTapsRef.current!;
     return () => {
       synth.dispose();
+      taps.oscillator0.dispose();
+      taps.oscillator1.dispose();
+      taps.oscillator2.dispose();
     };
   }, []);
 
@@ -116,5 +178,7 @@ export function usePolysynthAudioBridge() {
       time: number,
       velocity: number,
     ) => synthRef.current!.triggerAttackRelease(note, duration, time, velocity),
+    getOscillatorLevel: (index: number) =>
+      (meterReadersRef.current![index] ?? meterReadersRef.current![0])(),
   };
 }
