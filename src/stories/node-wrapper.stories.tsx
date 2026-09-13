@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The common title bar/chrome (rename input, mute/settings/close " +
+          "The common title bar/chrome (drag handle, mute/settings/close " +
           "buttons) placed around every node's content on the canvas in " +
           "`World.tsx`. This story wraps `Polysynth` to show it as it " +
           "actually appears there, rather than the bare panel shown in " +

@@ -2,6 +2,7 @@ import { ENV } from "@/env";
 import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
 import { NodeMap } from "@/utils/node-map";
+import colors from "tailwindcss/colors";
 
 interface WorldNode {
   id: string;
@@ -9,14 +10,15 @@ interface WorldNode {
   position: { left: number; top: number };
 }
 
-// initial node layout, replacing what used to be hardcoded JSX per node;
-// positions preserved from that previous layout
+// Polysynth (tall) on the left; the 4 shorter nodes in a 2x2 grid beside
+// it, sized off each node's measured rendered footprint plus a fixed gap -
+// keeps the whole layout inside the default (unscaled, unpanned) viewport
 const INITIAL_NODES: WorldNode[] = [
-  { id: "polysynth-1", type: "polysynth", position: { left: 300, top: 300 } },
-  { id: "keyboard-1", type: "keyboard", position: { left: 800, top: 400 } },
-  { id: "midiBox-1", type: "midiBox", position: { left: 550, top: 150 } },
-  { id: "filter-1", type: "filter", position: { left: 300, top: 650 } },
-  { id: "delay-1", type: "delay", position: { left: 900, top: 750 } },
+  { id: "polysynth-1", type: "polysynth", position: { left: 150, top: 150 } },
+  { id: "midiBox-1", type: "midiBox", position: { left: 500, top: 150 } },
+  { id: "keyboard-1", type: "keyboard", position: { left: 810, top: 150 } },
+  { id: "filter-1", type: "filter", position: { left: 500, top: 353 } },
+  { id: "delay-1", type: "delay", position: { left: 810, top: 353 } },
 ];
 
 export function World() {
@@ -69,9 +71,17 @@ function Background() {
           cx="10"
           cy="10"
           r="1.6257413380501518"
-          fill="#cbcbcbff"
+          fill={colors.stone[200]}
         ></circle>
       </pattern>
+
+      <rect
+        x="0"
+        y="0"
+        width={ENV.worldDims + "px"}
+        height={ENV.worldDims + "px"}
+        fill={colors.stone[50]}
+      ></rect>
 
       <rect
         id="rect"
