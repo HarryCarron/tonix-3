@@ -3,6 +3,8 @@ import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
 import { NodeMap } from "@/utils/node-map";
 import { WorldBackground } from "./WorldBackground";
+import { ConnectionsProvider } from "@/context/connections/ConnectionsContext";
+import { Connections } from "./Connections";
 
 interface WorldNode {
   id: string;
@@ -34,21 +36,24 @@ export function World() {
         width={ENV.worldDims + "px"}
         height={ENV.worldDims + "px"}
       />
-      {INITIAL_NODES.map(({ id, type, position }) => {
-        const NodeComponent = NodeMap[type];
+      <ConnectionsProvider>
+        {INITIAL_NODES.map(({ id, type, position }) => {
+          const NodeComponent = NodeMap[type];
 
-        return (
-          <span
-            key={id}
-            className="absolute"
-            style={{ left: position.left + "px", top: position.top + "px" }}
-          >
-            <NodeWrapper>
-              <NodeComponent />
-            </NodeWrapper>
-          </span>
-        );
-      })}
+          return (
+            <span
+              key={id}
+              className="absolute"
+              style={{ left: position.left + "px", top: position.top + "px" }}
+            >
+              <NodeWrapper id={id}>
+                <NodeComponent />
+              </NodeWrapper>
+            </span>
+          );
+        })}
+        <Connections />
+      </ConnectionsProvider>
     </div>
   );
 }

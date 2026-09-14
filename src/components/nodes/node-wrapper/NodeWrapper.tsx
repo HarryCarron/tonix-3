@@ -5,40 +5,52 @@ import { Button } from "@/components/ui/button";
 import { HiOutlineVolumeOff } from "react-icons/hi";
 import { TbGripVertical } from "react-icons/tb";
 import type { ReactNode } from "react";
+import { Terminal } from "./Terminal";
 
 interface NodeWrapperProps {
+  id: string;
   children: ReactNode;
 }
 
-export function NodeWrapper({ children }: NodeWrapperProps) {
+export function NodeWrapper({ id, children }: NodeWrapperProps) {
   return (
-    <div className="node-wrapper inline-flex flex-col">
-      <div className="title-container h-12 w-full flex items-center gap-[2px]">
-        <div className="flex items-center justify-center">
-          <Button variant="outline" size="icon" className="cursor-grab active:cursor-grabbing">
-            <TbGripVertical />
-          </Button>
+    <div className="inline-flex items-center gap-1">
+      <Terminal nodeId={id} side="input" />
+
+      <div className="node-wrapper inline-flex flex-col">
+        <div className="title-container h-12 w-full flex items-center gap-[2px]">
+          <div className="flex items-center justify-center">
+            <Button
+              variant="outline"
+              size="icon"
+              className="cursor-grab active:cursor-grabbing"
+            >
+              <TbGripVertical />
+            </Button>
+          </div>
+          <div className="grow" />
+          <span className="flex gap-[2px]">
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiOutlineVolumeOff />
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiAdjustments />
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="icon">
+                <HiOutlineX />
+              </Button>
+            </div>
+          </span>
         </div>
-        <div className="grow" />
-        <span className="flex gap-[2px]">
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiOutlineVolumeOff />
-            </Button>
-          </div>
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiAdjustments />
-            </Button>
-          </div>
-          <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon">
-              <HiOutlineX />
-            </Button>
-          </div>
-        </span>
+        <div className="node-container">{children}</div>
       </div>
-      <div className="node-container">{children}</div>
+
+      <Terminal nodeId={id} side="output" />
     </div>
   );
 }
