@@ -26,7 +26,7 @@ const INITIAL_NODES: WorldNode[] = [
 export function World() {
   return (
     <div
-      className="world"
+      className="world border border-stone-300"
       style={{
         height: ENV.worldDims + "px",
         width: ENV.worldDims + "px",

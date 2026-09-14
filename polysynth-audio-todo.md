@@ -181,6 +181,45 @@ exactly as it is today — uncontrolled, silent, unaffected.
       7% EXP 22% LIN 30% EXP") immediately on load, with no manual
       reselection needed, and that real audio still plays (150 new
       oscillator starts over 2s) with the preset active.
+- [x] Generalized `PlaybackHarnessBar` from one hardcoded imported `.mid`
+      file (Crystal Waters) to a list (`IMPORTED_MIDI_SOURCES`), and added
+      a second real source, `midi/C418 - Sweden.mid` ("Sweden"). State
+      changed from a single `LoadedMidiFile | null` to `LoadedMidiFile[]`,
+      loaded via one `Promise.all`; the `allPatterns`/`labels`/
+      `loopLengths` memos now spread over the array instead of a single
+      ternary. Crystal Waters stays first in the source list and thus
+      keeps the default-selected index. Verified both entries appear in
+      the Pattern dropdown, Crystal Waters is still selected by default,
+      and selecting Sweden actually plays real audio (31 real oscillator
+      starts over 3s, 0 page errors).
+
+## Bugs found + fixed post-merge
+
+- **PR #34 ("fix playback stalling on config changes during playback")
+  did not actually fix the reported bug**, despite its description and
+  being merged to `main`. Verified with a Playwright stress test
+  (rapid-drag a knob during playback while patching
+  `OscillatorNode.prototype.start` and `Tone.PolySynth.prototype.set` to
+  log real timing): PR #34's targeted fix (rAF-coalesced, diffed
+  `PolySynth.set()` calls in `usePolysynthAudioBridge.ts`) works
+  correctly — calls fire fast (<0.2ms) with no gaps — but note onsets
+  still stalled for multiple seconds during a drag. Real root cause was
+  unrelated to PR #34: `PlaybackHarnessBar` rebuilt `allPatterns`/
+  `loopLengths` as brand-new array literals on every render, and
+  `useMidiPatternPlayer`'s effect depends on them by reference — every
+  sibling re-render during a knob drag (the bar isn't memoized, and
+  `audioState` updates on every drag tick) tore down and rebuilt the
+  still-playing `Tone.Part`. Confirmed via a temporary source-level
+  `console.log` showing ~1:1 Part rebuilds to drag-move events (reusing
+  `Tone.PolySynth.prototype.set` monkeypatching didn't work for `Tone.Part`
+  — ES module namespace exports like `Tone.Part = ...` are read-only and
+  silently no-op). Fixed by wrapping `allPatterns`/`labels`/`loopLengths`
+  in `useMemo` keyed on `[patterns, importedMidi(Files)]` in
+  `PlaybackHarnessBar.tsx`. Re-verified: `Tone.Part.prototype.start` now
+  fires exactly once regardless of drag activity, and note-onset gaps
+  stay clean (~500ms, plus one consistent ~1330ms startup gap present
+  identically before and after the fix — confirmed to be normal
+  transport-startup latency, not a regression).
 
 ## Wrinkles / things to watch
 

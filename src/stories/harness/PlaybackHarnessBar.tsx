@@ -17,6 +17,7 @@ import {
 } from "@/components/nodes/midi-box/useMidiPatternPlayer";
 import { loadMidiFilePattern, type LoadedMidiFile } from "./loadMidiFile";
 import gypsyWomanMidiUrl from "../../../midi/Crystal Waters - Gypsy Woman.mid?url";
+import swedenMidiUrl from "../../../midi/C418 - Sweden.mid?url";
 import { FiPlay } from "react-icons/fi";
 import { TbPlayerPause } from "react-icons/tb";
 import type { PolysynthPreset } from "@/components/instruments/polysynth/polysynthPresets";
@@ -31,11 +32,26 @@ interface PlaybackHarnessBarProps {
   onPatchChange?: (state: PolysynthAudioState) => void;
 }
 
+// real .mid files loaded as extra selectable patterns, alongside the
+// hardcoded TEST_PATTERNS - Crystal Waters stays first/default; add more
+// here as they show up in midi/
+const IMPORTED_MIDI_SOURCES: { url: string; name: string }[] = [
+  { url: gypsyWomanMidiUrl, name: "Crystal Waters" },
+  { url: swedenMidiUrl, name: "Sweden" },
+];
+
+// selecting one of these songs resets the patch dropdown to the patch that
+// best fits it, by patch name (looked up in `patches` at select-time)
+const PATTERN_DEFAULT_PATCH: Record<string, string> = {
+  "Crystal Waters": "Super Saw Lead",
+  Sweden: "Soft Sine Pad",
+};
+
 // A slim transport header bar for Storybook harnesses that need a note
 // source to drive a real audio bridge - same pattern-select + play/pause/
 // stop/rewind controls as MidiBox, off the same useMidiPatternPlayer hook,
-// just styled as a bar instead of a node card. Also loads a real .mid file
-// (via @tonejs/midi) as an extra selectable pattern, alongside the
+// just styled as a bar instead of a node card. Also loads real .mid files
+// (via @tonejs/midi) as extra selectable patterns, alongside the
 // hardcoded TEST_PATTERNS.
 export function PlaybackHarnessBar({
   patterns = TEST_PATTERNS,
@@ -43,9 +59,9 @@ export function PlaybackHarnessBar({
   patches,
   onPatchChange,
 }: PlaybackHarnessBarProps) {
-  const [importedMidi, setImportedMidi] = useState<LoadedMidiFile | null>(
-    null,
-  );
+  const [importedMidiFiles, setImportedMidiFiles] = useState<
+    LoadedMidiFile[]
+  >([]);
   const [patchIndex, setPatchIndex] = useState(0);
 
   // the dropdown displays index 0 as selected from the start (it's the
@@ -61,12 +77,16 @@ export function PlaybackHarnessBar({
 
   useEffect(() => {
     let cancelled = false;
-    loadMidiFilePattern(gypsyWomanMidiUrl, "Crystal Waters")
+    Promise.all(
+      IMPORTED_MIDI_SOURCES.map((source) =>
+        loadMidiFilePattern(source.url, source.name),
+      ),
+    )
       .then((loaded) => {
-        if (!cancelled) setImportedMidi(loaded);
+        if (!cancelled) setImportedMidiFiles(loaded);
       })
       .catch((error) => {
-        console.error("Failed to load harness MIDI file:", error);
+        console.error("Failed to load harness MIDI files:", error);
       });
     return () => {
       cancelled = true;
@@ -81,24 +101,35 @@ export function PlaybackHarnessBar({
   // every single config change, which is what was actually stalling
   // playback (not the Tone.PolySynth.set() calls themselves)
   const allPatterns: MidiPattern[] = useMemo(
-    () => (importedMidi ? [...patterns, importedMidi.pattern] : patterns),
-    [patterns, importedMidi],
+    () => [...patterns, ...importedMidiFiles.map((f) => f.pattern)],
+    [patterns, importedMidiFiles],
   );
   const labels = useMemo(
     () => [
       ...patterns.map((_, index) => `Pattern ${index + 1}`),
-      ...(importedMidi ? [importedMidi.name] : []),
+      ...importedMidiFiles.map((f) => f.name),
     ],
-    [patterns, importedMidi],
+    [patterns, importedMidiFiles],
   );
   const loopLengths = useMemo(
     () => [
       ...patterns.map(() => undefined),
-      ...(importedMidi ? [importedMidi.loopLength] : []),
+      ...importedMidiFiles.map((f) => f.loopLength),
     ],
-    [patterns, importedMidi],
+    [patterns, importedMidiFiles],
   );
-  const importedMidiIndex = patterns.length;
+  // Crystal Waters is first in IMPORTED_MIDI_SOURCES, so it lands at this
+  // index once loaded - stays the default even with more sources added
+  const defaultImportedIndex = patterns.length;
+
+  const applyPatternDefaultPatch = (label: string) => {
+    const patchName = PATTERN_DEFAULT_PATCH[label];
+    if (!patchName || !patches) return;
+    const index = patches.findIndex((patch) => patch.name === patchName);
+    if (index === -1) return;
+    setPatchIndex(index);
+    onPatchChange?.(patches[index].state);
+  };
 
   const {
     patternIndex,
@@ -110,20 +141,25 @@ export function PlaybackHarnessBar({
     handleRewind,
   } = useMidiPatternPlayer(allPatterns, onTrigger, loopLengths);
 
-  // default to the imported song once it's loaded, rather than leaving
-  // the hardcoded Pattern 1 selected
+  // default to Crystal Waters once the imported songs are loaded, rather
+  // than leaving the hardcoded Pattern 1 selected
   useEffect(() => {
-    if (importedMidi) {
-      setPatternIndex(importedMidiIndex);
+    if (importedMidiFiles.length > 0) {
+      setPatternIndex(defaultImportedIndex);
+      applyPatternDefaultPatch(IMPORTED_MIDI_SOURCES[0].name);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [importedMidi]);
+  }, [importedMidiFiles]);
 
   return (
     <div className="w-full h-12 bg-card border-b border-stone-300 flex items-center gap-2 px-3">
       <Select
         value={String(patternIndex)}
-        onValueChange={(value) => setPatternIndex(Number(value))}
+        onValueChange={(value) => {
+          const index = Number(value);
+          setPatternIndex(index);
+          applyPatternDefaultPatch(labels[index]);
+        }}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select a pattern" />

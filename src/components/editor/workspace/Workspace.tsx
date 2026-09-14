@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { BoundingBoxTool } from "@/utils/workspace/bounding-box-tool";
 import Navigator from "../navigator/Navigator";
 import { patientLoad } from "@/utils/workspace/patient-load";
+import { ENV } from "@/env";
 
 export function Workspace() {
   const [editorTool, setEditorTool] = useState<EditorTool | undefined>();
@@ -21,11 +22,36 @@ export function Workspace() {
 
   const boundingBoxRef = useRef<BoundingBoxTool>(new BoundingBoxTool());
 
+  // Bounds the wrapper's `limitToBounds` clamps against collapse to a
+  // single point on any axis where the scaled world is smaller than the
+  // container (react-zoom-pan-pinch's getBounds), which both shows
+  // whitespace around the world and makes that axis un-pannable. Deriving
+  // minScale from the real container size (rather than a fixed guess)
+  // guarantees the world always covers the viewport at min zoom.
+  const [minScale, setMinScale] = useState(1);
+
   let classes = "";
 
   useEffect(() => {
     patientLoad.setSource("camera", transformRef.current);
     patientLoad.setSource("viewportHost", hostRef.current);
+  }, []);
+
+  useEffect(() => {
+    const host = hostRef.current!;
+
+    const updateMinScale = () => {
+      const { width, height } = host.getBoundingClientRect();
+      const coverScale = Math.max(width, height) / ENV.worldDims;
+      setMinScale(Math.min(coverScale, 1));
+    };
+
+    updateMinScale();
+
+    const observer = new ResizeObserver(updateMinScale);
+    observer.observe(host);
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -53,10 +79,13 @@ export function Workspace() {
 
   return (
     <div className={"w-full h-full relative " + classes}>
-      <div className="w-full h-full relative" ref={hostRef}>
+      <div className="w-full h-full relative bg-stone-100" ref={hostRef}>
         <TransformWrapper
-          panning={{ disabled: editorTool !== EditorTool.pan }}
-          minScale={0.3}
+          panning={{
+            disabled: editorTool !== EditorTool.pan,
+            velocityDisabled: true,
+          }}
+          minScale={minScale}
           maxScale={1}
           wheel={{ smoothStep: 0.001, step: 0.2 }}
           ref={transformRef}
