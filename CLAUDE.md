@@ -15,8 +15,12 @@ npm run lint             # eslint .
 npm run preview           # preview production build
 npm run storybook         # Storybook dev server on :6006
 npm run build-storybook    # static Storybook build
+npm run test              # vitest run
+npm run test:watch        # vitest (watch mode)
+npm run test:coverage     # vitest run --coverage
 ```
-There is no test runner wired up yet.
+
+Tests use Vitest + jsdom + React Testing Library, configured via the `test` block in root `vite.config.ts` (setup file: `src/test/setup.ts`). Test files are colocated with the code they cover (`Foo.ts` / `Foo.test.ts`), using the same `@/*` alias as the rest of the app. Pure logic and the imperative `utils/workspace/*` singletons are covered; component and Tone.js-dependent audio-hook coverage is still being filled in.
 
 ## Git commits & PRs
 
