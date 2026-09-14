@@ -74,6 +74,22 @@ export function Amp({ value, onChange }: AmpProps) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
 
+  // trackGlobalMouseMove reports on every native mousemove, uncapped - left
+  // unthrottled, dragging a handle would commit an ADSR update (and, for an
+  // audio-backed Amp, a Tone.js call downstream) on every one of those,
+  // easily 100+/sec. Coalescing to one flush per animation frame keeps the
+  // commit rate at paint cadence regardless of pointer rate.
+  const dragRafRef = useRef<number | null>(null);
+  const pendingDragRef = useRef<{ e: ClientPosition; i: number } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (dragRafRef.current != null) {
+        cancelAnimationFrame(dragRafRef.current);
+      }
+    };
+  }, []);
+
   useLayoutEffect(() => {
     if (container.current) {
       ampValues.current.totalXTravel = container.current.offsetWidth - xPad * 2;
@@ -374,7 +390,16 @@ export function Amp({ value, onChange }: AmpProps) {
 
   const onHandleDrag = (e: MouseEvent<SVGCircleElement>, i: number) => {
     handleClick(e, i);
-    trackGlobalMouseMove((e) => handleClick(e, i));
+    trackGlobalMouseMove((e) => {
+      pendingDragRef.current = { e, i };
+      if (dragRafRef.current != null) return;
+      dragRafRef.current = requestAnimationFrame(() => {
+        dragRafRef.current = null;
+        const pending = pendingDragRef.current;
+        pendingDragRef.current = null;
+        if (pending) handleClick(pending.e, pending.i);
+      });
+    });
   };
 
   const ampClicked = (i: number) => {
