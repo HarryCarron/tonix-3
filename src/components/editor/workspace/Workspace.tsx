@@ -12,11 +12,14 @@ import { BoundingBoxTool } from "@/utils/workspace/bounding-box-tool";
 import Navigator from "../navigator/Navigator";
 import { patientLoad } from "@/utils/workspace/patient-load";
 import { ENV } from "@/env";
+import { clientPointToContent } from "@/utils/workspace/viewport";
 
 export function Workspace() {
   const [editorTool, setEditorTool] = useState<EditorTool | undefined>();
 
   const hostRef = useRef<HTMLDivElement | null>(null);
+
+  const magOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const transformRef = useRef<ReactZoomPanPinchContentRef | null>(null);
 
@@ -59,15 +62,45 @@ export function Workspace() {
     const host = hostRef.current!;
 
     if (editorTool === EditorTool.mag) {
-      // listener intentionally not implemented yet — tracked as part of the
-      // mouse-anchored-zoom refactor (see CLAUDE.md's Coordinate model note)
-      bbox.setHost(host).listen(() => {});
+      // TransformWrapper's own mousedown handler calls stopPropagation()
+      // on every mousedown inside it regardless of `panning.disabled`, so
+      // a listener on `host` (an ancestor of the wrapper) never sees the
+      // event. The overlay sits on top of the wrapper and outside it in
+      // the DOM, so it gets the mousedown first and the wrapper never
+      // sees it at all.
+      const overlay = magOverlayRef.current!;
+      bbox.setHost(overlay).listen((rect) => {
+        const camera = transformRef.current;
+        if (!camera || rect.w === 0 || rect.h === 0) return;
+
+        const state = camera.instance.transformState;
+        const topLeft = clientPointToContent(rect.x, rect.y, host, state);
+        const bottomRight = clientPointToContent(
+          rect.x + rect.w,
+          rect.y + rect.h,
+          host,
+          state
+        );
+        const contentW = bottomRight.x - topLeft.x;
+        const contentH = bottomRight.y - topLeft.y;
+
+        const { width: hostW, height: hostH } = host.getBoundingClientRect();
+        const targetScale = Math.min(hostW / contentW, hostH / contentH);
+        const newScale = Math.min(Math.max(targetScale, minScale), 1);
+
+        const centerX = topLeft.x + contentW / 2;
+        const centerY = topLeft.y + contentH / 2;
+        const newPositionX = hostW / 2 - centerX * newScale;
+        const newPositionY = hostH / 2 - centerY * newScale;
+
+        camera.setTransform(newPositionX, newPositionY, newScale, 200, "easeOut");
+      });
     }
 
     return () => {
       bbox.done?.();
     };
-  }, [editorTool]);
+  }, [editorTool, minScale]);
 
   if (editorTool === EditorTool.pan) {
     classes = "cursor-grab";
@@ -95,6 +128,10 @@ export function Workspace() {
           </TransformComponent>
         </TransformWrapper>
       </div>
+
+      {editorTool === EditorTool.mag && (
+        <div className="absolute inset-0" ref={magOverlayRef} />
+      )}
 
       <div className="absolute tools flex justify-items-center align-items-center m-2">
         <Tools editorTool={editorTool!} setEditorTool={setEditorTool} />
