@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -73,17 +73,31 @@ export function PlaybackHarnessBar({
     };
   }, []);
 
-  const allPatterns: MidiPattern[] = importedMidi
-    ? [...patterns, importedMidi.pattern]
-    : patterns;
-  const labels = [
-    ...patterns.map((_, index) => `Pattern ${index + 1}`),
-    ...(importedMidi ? [importedMidi.name] : []),
-  ];
-  const loopLengths = [
-    ...patterns.map(() => undefined),
-    ...(importedMidi ? [importedMidi.loopLength] : []),
-  ];
+  // memoized so these stay referentially stable across unrelated re-
+  // renders (e.g. every audioState tick while dragging a Polysynth knob
+  // re-renders this sibling component too) - useMidiPatternPlayer's effect
+  // depends on patterns/loopLengths by reference, and a fresh array every
+  // render was tearing down and rebuilding the still-playing Tone.Part on
+  // every single config change, which is what was actually stalling
+  // playback (not the Tone.PolySynth.set() calls themselves)
+  const allPatterns: MidiPattern[] = useMemo(
+    () => (importedMidi ? [...patterns, importedMidi.pattern] : patterns),
+    [patterns, importedMidi],
+  );
+  const labels = useMemo(
+    () => [
+      ...patterns.map((_, index) => `Pattern ${index + 1}`),
+      ...(importedMidi ? [importedMidi.name] : []),
+    ],
+    [patterns, importedMidi],
+  );
+  const loopLengths = useMemo(
+    () => [
+      ...patterns.map(() => undefined),
+      ...(importedMidi ? [importedMidi.loopLength] : []),
+    ],
+    [patterns, importedMidi],
+  );
   const importedMidiIndex = patterns.length;
 
   const {
