@@ -61,6 +61,93 @@ function buildOscillatorSetOptions(osc: OscillatorAudioState) {
   };
 }
 
+// only the fields that actually changed since the last *applied* state -
+// same present-but-undefined landmine as buildOscillatorSetOptions above,
+// so a leg the diff didn't touch must be absent from the object entirely,
+// never set to undefined
+function diffOscillatorOptions(
+  next: OscillatorAudioState,
+  prev: OscillatorAudioState | null,
+) {
+  const built = buildOscillatorSetOptions(next);
+  return {
+    oscillator:
+      !prev ||
+      prev.wave !== next.wave ||
+      prev.detune !== next.detune ||
+      prev.phase !== next.phase
+        ? built.oscillator
+        : undefined,
+    gain:
+      !prev || prev.enabled !== next.enabled || prev.gain !== next.gain
+        ? built.gain
+        : undefined,
+    pan: !prev || prev.pan !== next.pan ? built.pan : undefined,
+  };
+}
+
+function diffEnvelopeOptions(
+  next: PolysynthAudioState["envelope"],
+  prev: PolysynthAudioState["envelope"] | null,
+): Partial<Tone.EnvelopeOptions> {
+  const envelope: Partial<Tone.EnvelopeOptions> = {};
+  if (!prev || prev.attack !== next.attack) {
+    envelope.attack = next.attack * ENVELOPE_TIMELINE_SECONDS;
+  }
+  if (!prev || prev.attackCurve !== next.attackCurve) {
+    envelope.attackCurve = mapCurveIndex(next.attackCurve, true);
+  }
+  if (!prev || prev.decay !== next.decay) {
+    envelope.decay = next.decay * ENVELOPE_TIMELINE_SECONDS;
+  }
+  if (!prev || prev.decayCurve !== next.decayCurve) {
+    envelope.decayCurve = mapCurveIndex(next.decayCurve, false);
+  }
+  if (!prev || prev.sustain !== next.sustain) {
+    envelope.sustain = next.sustain;
+  }
+  if (!prev || prev.release !== next.release) {
+    envelope.release = next.release * ENVELOPE_TIMELINE_SECONDS;
+  }
+  if (!prev || prev.releaseCurve !== next.releaseCurve) {
+    envelope.releaseCurve = mapCurveIndex(next.releaseCurve, true);
+  }
+  return envelope;
+}
+
+// the full options object PolySynth.set() needs to bring every voice from
+// `prev` (or its defaults, when null) to `next` - only the oscillator/
+// envelope legs that actually changed are included
+function buildSynthSetOptions(
+  next: PolysynthAudioState,
+  prev: PolysynthAudioState | null,
+) {
+  const [nextOsc0, nextOsc1, nextOsc2] = next.oscillators;
+  const [prevOsc0, prevOsc1, prevOsc2] = prev?.oscillators ?? [
+    null,
+    null,
+    null,
+  ];
+
+  const osc0 = diffOscillatorOptions(nextOsc0, prevOsc0);
+  const osc1 = diffOscillatorOptions(nextOsc1, prevOsc1);
+  const osc2 = diffOscillatorOptions(nextOsc2, prevOsc2);
+  const envelope = diffEnvelopeOptions(next.envelope, prev?.envelope ?? null);
+
+  return {
+    ...(osc0.oscillator ? { oscillator0: osc0.oscillator } : {}),
+    ...(osc0.gain ? { oscillator0Gain: osc0.gain } : {}),
+    ...(osc0.pan ? { oscillator0Pan: osc0.pan } : {}),
+    ...(osc1.oscillator ? { oscillator1: osc1.oscillator } : {}),
+    ...(osc1.gain ? { oscillator1Gain: osc1.gain } : {}),
+    ...(osc1.pan ? { oscillator1Pan: osc1.pan } : {}),
+    ...(osc2.oscillator ? { oscillator2: osc2.oscillator } : {}),
+    ...(osc2.gain ? { oscillator2Gain: osc2.gain } : {}),
+    ...(osc2.pan ? { oscillator2Pan: osc2.pan } : {}),
+    ...(Object.keys(envelope).length > 0 ? { envelope } : {}),
+  };
+}
+
 // one shared Meter per oscillator slot - every currently active voice's
 // oscillatorN output fans into the same tap (see PolysynthVoice's
 // oscillatorNMeterTap), so each meter reflects that oscillator's combined
@@ -129,32 +216,31 @@ export function usePolysynthAudioBridge() {
     DEFAULT_POLYSYNTH_AUDIO_STATE,
   );
 
-  useEffect(() => {
-    const synth = synthRef.current!;
-    const [osc0, osc1, osc2] = audioState.oscillators.map(
-      buildOscillatorSetOptions,
-    );
-    const envelope = audioState.envelope;
+  const lastAppliedStateRef = useRef<PolysynthAudioState | null>(null);
+  const pendingStateRef = useRef<PolysynthAudioState | null>(null);
+  const applyRafRef = useRef<number | null>(null);
 
-    synth.set({
-      oscillator0: osc0.oscillator,
-      oscillator0Gain: osc0.gain,
-      oscillator0Pan: osc0.pan,
-      oscillator1: osc1.oscillator,
-      oscillator1Gain: osc1.gain,
-      oscillator1Pan: osc1.pan,
-      oscillator2: osc2.oscillator,
-      oscillator2Gain: osc2.gain,
-      oscillator2Pan: osc2.pan,
-      envelope: {
-        attack: envelope.attack * ENVELOPE_TIMELINE_SECONDS,
-        attackCurve: mapCurveIndex(envelope.attackCurve, true),
-        decay: envelope.decay * ENVELOPE_TIMELINE_SECONDS,
-        decayCurve: mapCurveIndex(envelope.decayCurve, false),
-        sustain: envelope.sustain,
-        release: envelope.release * ENVELOPE_TIMELINE_SECONDS,
-        releaseCurve: mapCurveIndex(envelope.releaseCurve, true),
-      },
+  // A continuous drag (a rotary knob, an envelope handle) can push
+  // audioState updates far faster than PolySynth.set() can absorb - it
+  // walks every pooled voice's full options tree synchronously on the main
+  // thread, the same thread Tone's lookahead scheduler uses to fire the
+  // MIDI Part's note callbacks on time. Flooding it competes with that
+  // scheduling and surfaces as audible pauses in playback. Coalescing to
+  // one flush per animation frame, applying only what changed since the
+  // last flush, keeps that work bounded no matter how fast the UI fires.
+  useEffect(() => {
+    pendingStateRef.current = audioState;
+
+    if (applyRafRef.current != null) return;
+
+    applyRafRef.current = requestAnimationFrame(() => {
+      applyRafRef.current = null;
+      const next = pendingStateRef.current!;
+      const options = buildSynthSetOptions(next, lastAppliedStateRef.current);
+      if (Object.keys(options).length > 0) {
+        synthRef.current!.set(options);
+      }
+      lastAppliedStateRef.current = next;
     });
   }, [audioState]);
 
@@ -162,6 +248,9 @@ export function usePolysynthAudioBridge() {
     const synth = synthRef.current!;
     const taps = meterTapsRef.current!;
     return () => {
+      if (applyRafRef.current != null) {
+        cancelAnimationFrame(applyRafRef.current);
+      }
       synth.dispose();
       taps.oscillator0.dispose();
       taps.oscillator1.dispose();

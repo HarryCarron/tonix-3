@@ -156,7 +156,38 @@ export default function RotaryControl(props: RotaryControlProps) {
   );
   onChangeStagedRef.current = isStaged ? props.onChange : undefined;
 
+  // A drag reports on every native mousemove (DragAndDrop is a raw DOM
+  // listener, not throttled) - that can be 100+/sec, far faster than a
+  // control's own onChange needs to commit. Left unthrottled, every one of
+  // those becomes a React state update (and, for an audio-backed control,
+  // a synchronous Tone.js call) - coalescing to one flush per animation
+  // frame keeps the commit rate at paint cadence regardless of pointer rate.
+  const pendingKindRef = useRef<"continuous" | "staged" | null>(null);
+  const pendingContinuousValueRef = useRef(0);
+  const pendingStagedValueRef = useRef("");
+  const dragRafRef = useRef<number | null>(null);
+
   useEffect(() => {
+    const flushPending = () => {
+      dragRafRef.current = null;
+      if (pendingKindRef.current === "staged") {
+        const value = pendingStagedValueRef.current;
+        if (onChangeStagedRef.current) {
+          onChangeStagedRef.current(value);
+        } else {
+          setInternalStagedValue(value);
+        }
+      } else if (pendingKindRef.current === "continuous") {
+        const value = pendingContinuousValueRef.current;
+        if (onChangeContinuousRef.current) {
+          onChangeContinuousRef.current(value);
+        } else {
+          setInternalContinuousValue(value);
+        }
+      }
+      pendingKindRef.current = null;
+    };
+
     const dd = new DragAndDrop().setHost(rotaryControl.current!);
 
     dd.listen(({ type, e }) => {
@@ -196,19 +227,15 @@ export default function RotaryControl(props: RotaryControlProps) {
           if (nextIndex === lastStageIndexRef.current) return;
           lastStageIndexRef.current = nextIndex;
 
-          const nextValue = stagesNow[nextIndex].value;
-
-          if (onChangeStagedRef.current) {
-            onChangeStagedRef.current(nextValue);
-          } else {
-            setInternalStagedValue(nextValue);
-          }
+          pendingKindRef.current = "staged";
+          pendingStagedValueRef.current = stagesNow[nextIndex].value;
         } else {
-          if (onChangeContinuousRef.current) {
-            onChangeContinuousRef.current(next);
-          } else {
-            setInternalContinuousValue(next);
-          }
+          pendingKindRef.current = "continuous";
+          pendingContinuousValueRef.current = next;
+        }
+
+        if (dragRafRef.current == null) {
+          dragRafRef.current = requestAnimationFrame(flushPending);
         }
       }
     });
@@ -217,6 +244,10 @@ export default function RotaryControl(props: RotaryControlProps) {
 
     return () => {
       ddRef.current?.done();
+      if (dragRafRef.current != null) {
+        cancelAnimationFrame(dragRafRef.current);
+        dragRafRef.current = null;
+      }
     };
   }, []);
 
