@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./Additive.css";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import { DragAndDrop } from "@/utils/drag-and-drop";
 import CanvasUtilities from "@/utils/canvas";
