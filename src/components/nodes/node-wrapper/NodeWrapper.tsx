@@ -4,7 +4,7 @@ import "./NodeWrapper.css";
 import { Button } from "@/components/ui/button";
 import { HiOutlineVolumeOff } from "react-icons/hi";
 import { TbGripVertical } from "react-icons/tb";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ReactZoomPanPinchContentRef } from "react-zoom-pan-pinch";
 import { Terminal } from "./Terminal";
 import { DragAndDrop } from "@/utils/drag-and-drop";
@@ -25,6 +25,7 @@ interface NodeWrapperProps {
 export function NodeWrapper({ id, children, onDrag }: NodeWrapperProps) {
   const gripHostRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<ReactZoomPanPinchContentRef | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     patientLoad.getSource<ReactZoomPanPinchContentRef>("camera", (camera) => {
@@ -55,6 +56,7 @@ export function NodeWrapper({ id, children, onDrag }: NodeWrapperProps) {
     dd.listen(({ type, e }) => {
       if (type === "start") {
         last = { x: e.clientX, y: e.clientY };
+        setIsDragging(true);
         return;
       }
 
@@ -78,6 +80,7 @@ export function NodeWrapper({ id, children, onDrag }: NodeWrapperProps) {
         cancelAnimationFrame(rafId);
         flush();
       }
+      setIsDragging(false);
     });
 
     return () => {
@@ -90,7 +93,12 @@ export function NodeWrapper({ id, children, onDrag }: NodeWrapperProps) {
     <div className="inline-flex items-center gap-1">
       <Terminal nodeId={id} side="input" />
 
-      <div className="node-wrapper inline-flex flex-col">
+      <div
+        className={
+          "node-wrapper inline-flex flex-col " +
+          (isDragging ? "scale-105 relative z-10" : "")
+        }
+      >
         <div className="title-container h-12 w-full flex items-center gap-[2px]">
           <div className="flex items-center justify-center" ref={gripHostRef}>
             <Button

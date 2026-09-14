@@ -21,7 +21,7 @@ export function Connections() {
           key={connection.id}
           d={describeConnectionPath(connection.from, connection.to)}
           stroke="rgb(87 83 78 / 0.6)"
-          strokeWidth={2}
+          strokeWidth={3}
           strokeLinecap="round"
           fill="none"
         />
@@ -31,7 +31,7 @@ export function Connections() {
         <path
           d={describeConnectionPath(attempt.from, attempt.to)}
           stroke="rgb(87 83 78 / 0.35)"
-          strokeWidth={2}
+          strokeWidth={3}
           strokeDasharray="4 3"
           strokeLinecap="round"
           fill="none"
