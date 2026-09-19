@@ -42,7 +42,7 @@ describe("NavigatorController", () => {
     expect(world.style.height).toBe(`${ENV.worldDims * 0.1}px`);
   });
 
-  it("observes the world element for resize", () => {
+  it("observes the host element (the real workspace viewport) for resize", () => {
     const world = document.createElement("div");
     const host = document.createElement("div");
 
@@ -52,10 +52,10 @@ describe("NavigatorController", () => {
       .setHostElement(host)
       .init();
 
-    expect(observeSpy).toHaveBeenCalledWith(world);
+    expect(observeSpy).toHaveBeenCalledWith(host);
   });
 
-  it("resizes the host to match the observed world size, scaled", () => {
+  it("re-derives the minimap world's fixed size (not the host's) whenever the host resizes", () => {
     const world = document.createElement("div");
     const host = document.createElement("div");
 
@@ -65,11 +65,18 @@ describe("NavigatorController", () => {
       .setHostElement(host)
       .init();
 
+    world.style.width = "";
+    world.style.height = "";
+
     lastCallback!([
       { contentRect: { width: 200, height: 100 } } as ResizeObserverEntry,
     ]);
 
-    expect(host.style.width).toBe("100px");
-    expect(host.style.height).toBe("50px");
+    // sized off ENV.worldDims, not the observed host contentRect - writing a
+    // computed size onto the real viewport (`host`) crushes it instead
+    expect(world.style.width).toBe(`${ENV.worldDims * 0.5}px`);
+    expect(world.style.height).toBe(`${ENV.worldDims * 0.5}px`);
+    expect(host.style.width).toBe("");
+    expect(host.style.height).toBe("");
   });
 });
