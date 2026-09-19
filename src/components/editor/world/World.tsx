@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import { ENV } from "@/env";
 import "./World.css";
 import { NodeWrapper } from "@/components/nodes/node-wrapper/NodeWrapper";
@@ -9,6 +10,12 @@ import { Connections } from "./Connections";
 interface WorldNode {
   id: string;
   type: keyof typeof NodeMap;
+  // Per-node canvas position - the piece of patch state this file owns.
+  // Camera pan/zoom (the other half of a persistable "patch" - see
+  // CLAUDE.md's State management note) lives separately in
+  // react-zoom-pan-pinch's own instance state; the two aren't unified yet,
+  // but both are plain serializable data so a future save/load layer can
+  // read this alongside `transformRef.current.instance.transformState`.
   position: { left: number; top: number };
 }
 
@@ -24,9 +31,27 @@ const INITIAL_NODES: WorldNode[] = [
 ];
 
 export function World() {
+  const [nodes, setNodes] = useState<WorldNode[]>(INITIAL_NODES);
+
+  const handleNodeDrag = useCallback((id: string, dx: number, dy: number) => {
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              position: {
+                left: node.position.left + dx,
+                top: node.position.top + dy,
+              },
+            }
+          : node
+      )
+    );
+  }, []);
+
   return (
     <div
-      className="world"
+      className="world border border-stone-300"
       style={{
         height: ENV.worldDims + "px",
         width: ENV.worldDims + "px",
@@ -37,7 +62,7 @@ export function World() {
         height={ENV.worldDims + "px"}
       />
       <ConnectionsProvider>
-        {INITIAL_NODES.map(({ id, type, position }) => {
+        {nodes.map(({ id, type, position }) => {
           const NodeComponent = NodeMap[type];
 
           return (
@@ -46,7 +71,7 @@ export function World() {
               className="absolute"
               style={{ left: position.left + "px", top: position.top + "px" }}
             >
-              <NodeWrapper id={id}>
+              <NodeWrapper id={id} onDrag={handleNodeDrag}>
                 <NodeComponent />
               </NodeWrapper>
             </span>

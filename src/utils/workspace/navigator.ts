@@ -30,12 +30,15 @@ export class NavigatorController {
     this._world!.style.width = `${ENV.worldDims * this._scaleVal!}px`;
   }
 
+  // Re-derives the minimap's own fixed size (off ENV.worldDims, not off
+  // `_host`) whenever `_host` resizes. Must observe `_host` and only ever
+  // write to `_world` - `_host` is the real workspace canvas container, and
+  // writing a computed inline size onto it (as this previously did, with
+  // the observe/mutate targets swapped) crushes the actual pannable
+  // viewport down to a few pixels.
   private _initResizeObserver(): void {
-    new ResizeObserver((entry: ResizeObserverEntry[]) => {
-      const { width, height } = entry[0].contentRect;
-
-      this._host!.style.width = `${width * this._scaleVal!}px`;
-      this._host!.style.height = `${height * this._scaleVal!}px`;
-    }).observe(this._world!);
+    new ResizeObserver(() => {
+      this._setWorldDims();
+    }).observe(this._host!);
   }
 }
