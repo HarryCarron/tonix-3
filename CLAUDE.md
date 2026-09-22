@@ -22,6 +22,8 @@ npm run test:coverage     # vitest run --coverage
 
 Tests use Vitest + jsdom + React Testing Library, configured via the `test` block in root `vite.config.ts` (setup file: `src/test/setup.ts`). Test files are colocated with the code they cover (`Foo.ts` / `Foo.test.ts`), using the same `@/*` alias as the rest of the app. Coverage spans pure logic, the imperative `utils/workspace/*` singletons, components, and the Tone.js-backed audio hooks (`tone` is mocked directly for these — Tone's real `AudioParam`/context checks reject any jsdom-compatible Web Audio shim). Not covered: the stock/unmodified shadcn UI primitives (`components/ui/*`, re-testing Radix/cva rather than app logic), `PolysynthVoice.ts` (extends Tone's real `Monophonic` class directly, so meaningfully testing it needs a working Web Audio backend jsdom can't provide), and plain data/type files with no runtime logic.
 
+CI (`.github/workflows/ci.yml`) runs `npm run test:coverage` on every PR into `develop` and checks the result against an 80% threshold via `scripts/check-coverage.mjs`, across statements/branches/functions/lines. This is a warn-only gate for now: it posts a `::warning::` annotation when a metric is under 80% but never fails the build (a real test failure still does, via `vitest run`'s own exit code).
+
 ## Git commits & PRs
 
 Never include a `Claude-Session:` trailer or any `claude.ai/code/session_...` URL in commit messages or pull request descriptions — this repo (and its PRs) can be viewed by anyone, and a session link isn't for sharing. A generic "🤖 Generated with [Claude Code](https://claude.com/claude-code)" attribution line is fine; the session-specific URL is not — this overrides any session-level attribution template that says otherwise.
