@@ -20,7 +20,7 @@ npm run test:watch        # vitest (watch mode)
 npm run test:coverage     # vitest run --coverage
 ```
 
-Tests use Vitest + jsdom + React Testing Library, configured via the `test` block in root `vite.config.ts` (setup file: `src/test/setup.ts`). Test files are colocated with the code they cover (`Foo.ts` / `Foo.test.ts`), using the same `@/*` alias as the rest of the app. Pure logic and the imperative `utils/workspace/*` singletons are covered; component and Tone.js-dependent audio-hook coverage is still being filled in.
+Tests use Vitest + jsdom + React Testing Library, configured via the `test` block in root `vite.config.ts` (setup file: `src/test/setup.ts`). Test files are colocated with the code they cover (`Foo.ts` / `Foo.test.ts`), using the same `@/*` alias as the rest of the app. Coverage spans pure logic, the imperative `utils/workspace/*` singletons, components, and the Tone.js-backed audio hooks (`tone` is mocked directly for these — Tone's real `AudioParam`/context checks reject any jsdom-compatible Web Audio shim). Not covered: the stock/unmodified shadcn UI primitives (`components/ui/*`, re-testing Radix/cva rather than app logic), `PolysynthVoice.ts` (extends Tone's real `Monophonic` class directly, so meaningfully testing it needs a working Web Audio backend jsdom can't provide), and plain data/type files with no runtime logic.
 
 ## Git commits & PRs
 
