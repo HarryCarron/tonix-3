@@ -13,7 +13,6 @@ dist-ssr
 *.local
 *.tsbuildinfo
 storybook-static
-coverage
 
 # Editor directories and files
 .vscode/*
